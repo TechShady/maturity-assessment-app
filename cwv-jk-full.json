@@ -1,0 +1,15 @@
+﻿dtctl : {
+At line:1 char:33
++ ... ; $output = dtctl edit dashboard 30688d2b-d6ef-4aac-9761-de88820918cb ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ({:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  "ok": false,
+  "result": null,
+  "error": {
+    "code": "error",
+    "message": "editor failed: exec: \"type\": executable file not found in 
+%PATH%"
+  }
+}

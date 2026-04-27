@@ -1,0 +1,62 @@
+[
+  {
+    "tileId": "109",
+    "title": "CLS",
+    "query": "fetch user.events\n| filter characteristics.has_page_summary\n| makeTimeseries  \n  p75CLS_scalar = percentile(web_vitals.cumulative_layout_shift, 75, scalar: true)"
+  },
+  {
+    "tileId": "110",
+    "title": "INP",
+    "query": "fetch user.events\n| filter characteristics.has_page_summary\n| makeTimeseries  \n  p75INP_scalar = percentile(web_vitals.interaction_to_next_paint, 75, scalar:true)"
+  },
+  {
+    "tileId": "111",
+    "title": "LCP",
+    "query": "fetch user.events\n| filter characteristics.has_page_summary\n| makeTimeseries  \n  p75LCP_scalar = percentile(web_vitals.largest_contentful_paint, 75, scalar:true)"
+  },
+  {
+    "tileId": "112",
+    "title": "Error Count",
+    "query": "fetch user.events\n| filter characteristics.has_error\n| makeTimeseries count = count()\n| fieldsAdd errors = arraySum(count)"
+  },
+  {
+    "tileId": "113",
+    "title": "Page Load Time",
+    "query": "fetch user.events\n| filter characteristics.has_navigation\n| makeTimeseries  \n  medianPageLoad = percentile(performance.load_event_end, 50),\n  medianPageLoad_scalar = percentile(performance.load_event_end, 50, scalar:true)"
+  },
+  {
+    "tileId": "114",
+    "title": "Navigations",
+    "query": "fetch user.events\n| filter characteristics.has_navigation \n| makeTimeseries Count = count()\n| fieldsAdd navigations = arraySum(Count)"
+  },
+  {
+    "tileId": "117",
+    "title": "User Actions",
+    "query": "fetch user.events\n| filter characteristics.has_page_summary or characteristics.has_w3c_navigation_timings\n| filter isNotNull(page.name)\n| summarize {\n    wlcp = if(isNull(percentile(web_vitals.largest_contentful_paint, 75)), 0, else:percentile(web_vitals.largest_contentful_paint, 75)), \n    wcls = if(isNull(percentile(web_vitals.cumulative_layout_shift, 75)), 0, else:percentile(web_vitals.cumulative_layout_shift, 75)), \n    winp = if(isNull(percentile(web_vitals.interaction_to_next_paint, 75)), 0, else:percentile(web_vitals.interaction_to_next_paint, 75)), \n    Count = countIf(characteristics.has_w3c_navigation_timings)\n  }, by: { page.name, dt.rum.application.entity }\n| fieldsAdd dt.entity.application = dt.rum.application.entity\n| fieldsAdd Application = entityName(dt.entity.application)\n| fieldsRemove dt.entity.application\n| fields App=Application, Page = page.name, `Count` = Count, CWVScore = if(((wcls >= .1) or (toDouble(wlcp) >= 2500000000) or (toDouble(winp) >= 200000000)), \"Γ¥îFail\", else: \"Γ£àPass\"), `LCP` = wlcp, `INP` = winp, `CLS` = round(wcls,decimals:4)\n| sort Count desc\n//| limit 100"
+  },
+  {
+    "tileId": "118",
+    "title": "CWV Health",
+    "query": "fetch user.events\n| filter characteristics.has_page_summary or characteristics.has_w3c_navigation_timings\n| filter isNotNull(page.name)\n| summarize {\n    wlcp = if(isNull(percentile(web_vitals.largest_contentful_paint, 75)), 0, else:percentile(web_vitals.largest_contentful_paint, 75)), \n    wcls = if(isNull(percentile(web_vitals.cumulative_layout_shift, 75)), 0, else:percentile(web_vitals.cumulative_layout_shift, 75)), \n    winp = if(isNull(percentile(web_vitals.interaction_to_next_paint, 75)), 0, else:percentile(web_vitals.interaction_to_next_paint, 75)), \n    Count = countIf(characteristics.has_w3c_navigation_timings)\n  }, by: { page.name, dt.rum.application.entity }\n| fieldsAdd dt.entity.application = dt.rum.application.entity\n| fieldsAdd Application = entityName(dt.entity.application)\n| fieldsRemove dt.entity.application\n| fields App=Application, Page = page.name, CWVScore = if(((wcls >= .1) or (toDouble(wlcp) >= 2500000000) or (toDouble(winp) >= 200000000)), 0, else: 1)\n| sort CWVScore asc\n"
+  },
+  {
+    "tileId": "121",
+    "title": "Applications",
+    "query": "fetch user.events\n| filter characteristics.has_page_summary or characteristics.has_w3c_navigation_timings\n| filter isNotNull(page.name)\n| summarize {\n    wlcp = if(isNull(percentile(web_vitals.largest_contentful_paint, 75)), 0, else:percentile(web_vitals.largest_contentful_paint, 75)), \n    wcls = if(isNull(percentile(web_vitals.cumulative_layout_shift, 75)), 0, else:percentile(web_vitals.cumulative_layout_shift, 75)), \n    winp = if(isNull(percentile(web_vitals.interaction_to_next_paint, 75)), 0, else:percentile(web_vitals.interaction_to_next_paint, 75)), \n    Count = countIf(characteristics.has_w3c_navigation_timings)\n  }, by: { dt.rum.application.entity }\n| fieldsAdd dt.entity.application = dt.rum.application.entity\n| fieldsAdd Application = entityName(dt.entity.application)\n| fieldsRemove dt.entity.application\n| fields App=Application, `Count` = Count, CWVScore = if(((wcls >= .1) or (toDouble(wlcp) >= 2500000000) or (toDouble(winp) >= 200000000)), \"Γ¥îFail\", else: \"Γ£àPass\"), `LCP` = wlcp, `INP` = winp, `CLS` = round(wcls,decimals:4)\n| sort Count desc\n| limit 25"
+  },
+  {
+    "tileId": "122",
+    "title": "LCP",
+    "query": "fetch user.events\n| filter characteristics.has_page_summary\n| makeTimeseries  \n  p75LCP = percentile(web_vitals.largest_contentful_paint, 75)\n"
+  },
+  {
+    "tileId": "123",
+    "title": "INP",
+    "query": "fetch user.events\n| filter characteristics.has_page_summary\n| makeTimeseries  \n  p75INP = percentile(web_vitals.interaction_to_next_paint , 75) "
+  },
+  {
+    "tileId": "124",
+    "title": "CLS",
+    "query": "fetch user.events\n| filter characteristics.has_page_summary\n| makeTimeseries  \n  p75CLS = percentile(web_vitals.cumulative_layout_shift, 75)"
+  }
+]

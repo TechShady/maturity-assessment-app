@@ -1,0 +1,869 @@
+{
+  "title": "Frontend Observability for CWV Report",
+  "description": "This Workflow generates Frontend Observability for CWV reports and emails to the specified addresses.",
+  "ownerType": "USER",
+  "isPrivate": true,
+  "schemaVersion": 4,
+  "trigger": {},
+  "result": null,
+  "type": "STANDARD",
+  "input": {},
+  "hourlyExecutionLimit": 10,
+  "guide": "# Frontend Observability for CWV Report\nGet Core Web Vitals analysis. This Workflow queries Grail and provides data to Dynatrace Intelligence to get recommendations. These recommendations are then sent to email(s) of your choice.\n\n# Setup\n1. Change emails (`to`, `cc`, `bcc`) to be an array of strings.\n2. Test with a manual Run, by click the `Run` button.\n3. If everything works as expected, change the [Trigger](?trigger=) to a schedule, e.g. Weekly, Daily, etc.",
+  "tasks": {
+    "content_layout_shift": {
+      "name": "content_layout_shift",
+      "input": {
+        "query": "fetch user.events, from: @d-1d, to: @d\n| filter characteristics.has_page_summary\n| makeTimeseries  \n  p75CLS_scalar = percentile(web_vitals.cumulative_layout_shift, 75, scalar: true)\n| limit 25"
+      },
+      "action": "dynatrace.automations:execute-dql-query",
+      "position": {
+        "x": -6,
+        "y": 1
+      },
+      "description": "Make use of Dynatrace Grail data in your workflow.",
+      "predecessors": []
+    },
+    "interaction_to_next_paint": {
+      "name": "interaction_to_next_paint",
+      "input": {
+        "query": "fetch user.events, from: @d-1d, to: @d\n| filter characteristics.has_page_summary\n| makeTimeseries  \n  p75INP_scalar = percentile(web_vitals.interaction_to_next_paint, 75, scalar:true)\n| limit 25"
+      },
+      "action": "dynatrace.automations:execute-dql-query",
+      "position": {
+        "x": -5,
+        "y": 1
+      },
+      "description": "Make use of Dynatrace Grail data in your workflow.",
+      "predecessors": []
+    },
+    "largest_contentful_paint": {
+      "name": "largest_contentful_paint",
+      "input": {
+        "query": "fetch user.events, from: @d-1d, to: @d\n| filter characteristics.has_page_summary\n| makeTimeseries  \n  p75LCP_scalar = percentile(web_vitals.largest_contentful_paint, 75, scalar:true)\n| limit 25"
+      },
+      "action": "dynatrace.automations:execute-dql-query",
+      "position": {
+        "x": -4,
+        "y": 1
+      },
+      "description": "Make use of Dynatrace Grail data in your workflow.",
+      "predecessors": []
+    },
+    "error_count": {
+      "name": "error_count",
+      "input": {
+        "query": "fetch user.events, from: @d-1d, to: @d\n| filter characteristics.has_error\n| makeTimeseries count = count()\n| fieldsAdd errors = arraySum(count)\n| limit 25"
+      },
+      "action": "dynatrace.automations:execute-dql-query",
+      "position": {
+        "x": -3,
+        "y": 1
+      },
+      "description": "Make use of Dynatrace Grail data in your workflow.",
+      "predecessors": []
+    },
+    "page_load_time": {
+      "name": "page_load_time",
+      "input": {
+        "query": "fetch user.events, from: @d-1d, to: @d\n| filter characteristics.has_navigation\n| makeTimeseries  \n  medianPageLoad = percentile(performance.load_event_end, 50),\n  medianPageLoad_scalar = percentile(performance.load_event_end, 50, scalar:true)\n| limit 25"
+      },
+      "action": "dynatrace.automations:execute-dql-query",
+      "position": {
+        "x": -2,
+        "y": 1
+      },
+      "description": "Make use of Dynatrace Grail data in your workflow.",
+      "predecessors": []
+    },
+    "navigations": {
+      "name": "navigations",
+      "input": {
+        "query": "fetch user.events, from: @d-1d, to: @d\n| filter characteristics.has_navigation \n| makeTimeseries Count = count()\n| fieldsAdd navigations = arraySum(Count)\n| limit 25"
+      },
+      "action": "dynatrace.automations:execute-dql-query",
+      "position": {
+        "x": -1,
+        "y": 1
+      },
+      "description": "Make use of Dynatrace Grail data in your workflow.",
+      "predecessors": []
+    },
+    "user_actions": {
+      "name": "user_actions",
+      "input": {
+        "query": "fetch user.events, from: @d-1d, to: @d\n| filter characteristics.has_page_summary or characteristics.has_w3c_navigation_timings\n| filter isNotNull(page.name)\n| summarize {\n    wlcp = if(isNull(percentile(web_vitals.largest_contentful_paint, 75)), 0, else:percentile(web_vitals.largest_contentful_paint, 75)), \n    wcls = if(isNull(percentile(web_vitals.cumulative_layout_shift, 75)), 0, else:percentile(web_vitals.cumulative_layout_shift, 75)), \n    winp = if(isNull(percentile(web_vitals.interaction_to_next_paint, 75)), 0, else:percentile(web_vitals.interaction_to_next_paint, 75)), \n    Count = countIf(characteristics.has_w3c_navigation_timings)\n  }, by: { page.name, dt.rum.application.entity }\n| fieldsAdd dt.entity.application = dt.rum.application.entity\n| fieldsAdd Application = entityName(dt.entity.application)\n| fieldsRemove dt.entity.application\n| fields App=Application, Page = page.name, `Count` = Count, CWVScore = if(((wcls >= .1) or (toDouble(wlcp) >= 2500000000) or (toDouble(winp) >= 200000000)), \"❌Fail\", else: \"✅Pass\"), `LCP` = wlcp, `INP` = winp, `CLS` = round(wcls,decimals:4)\n| sort Count desc\n//| limit 100\n| limit 25"
+      },
+      "action": "dynatrace.automations:execute-dql-query",
+      "position": {
+        "x": 0,
+        "y": 1
+      },
+      "description": "Make use of Dynatrace Grail data in your workflow.",
+      "predecessors": []
+    },
+    "cwv_health": {
+      "name": "cwv_health",
+      "input": {
+        "query": "fetch user.events, from: @d-1d, to: @d\n| filter characteristics.has_page_summary or characteristics.has_w3c_navigation_timings\n| filter isNotNull(page.name)\n| summarize {\n    wlcp = if(isNull(percentile(web_vitals.largest_contentful_paint, 75)), 0, else:percentile(web_vitals.largest_contentful_paint, 75)), \n    wcls = if(isNull(percentile(web_vitals.cumulative_layout_shift, 75)), 0, else:percentile(web_vitals.cumulative_layout_shift, 75)), \n    winp = if(isNull(percentile(web_vitals.interaction_to_next_paint, 75)), 0, else:percentile(web_vitals.interaction_to_next_paint, 75)), \n    Count = countIf(characteristics.has_w3c_navigation_timings)\n  }, by: { page.name, dt.rum.application.entity }\n| fieldsAdd dt.entity.application = dt.rum.application.entity\n| fieldsAdd Application = entityName(dt.entity.application)\n| fieldsRemove dt.entity.application\n| fields App=Application, Page = page.name, CWVScore = if(((wcls >= .1) or (toDouble(wlcp) >= 2500000000) or (toDouble(winp) >= 200000000)), 0, else: 1)\n| sort CWVScore asc\n| limit 25"
+      },
+      "action": "dynatrace.automations:execute-dql-query",
+      "position": {
+        "x": 1,
+        "y": 1
+      },
+      "description": "Make use of Dynatrace Grail data in your workflow.",
+      "predecessors": []
+    },
+    "applications": {
+      "name": "applications",
+      "input": {
+        "query": "fetch user.events, from: @d-1d, to: @d\n| filter characteristics.has_page_summary or characteristics.has_w3c_navigation_timings\n| filter isNotNull(page.name)\n| summarize {\n    wlcp = if(isNull(percentile(web_vitals.largest_contentful_paint, 75)), 0, else:percentile(web_vitals.largest_contentful_paint, 75)), \n    wcls = if(isNull(percentile(web_vitals.cumulative_layout_shift, 75)), 0, else:percentile(web_vitals.cumulative_layout_shift, 75)), \n    winp = if(isNull(percentile(web_vitals.interaction_to_next_paint, 75)), 0, else:percentile(web_vitals.interaction_to_next_paint, 75)), \n    Count = countIf(characteristics.has_w3c_navigation_timings)\n  }, by: { dt.rum.application.entity }\n| fieldsAdd dt.entity.application = dt.rum.application.entity\n| fieldsAdd Application = entityName(dt.entity.application)\n| fieldsRemove dt.entity.application\n| fields App=Application, `Count` = Count, CWVScore = if(((wcls >= .1) or (toDouble(wlcp) >= 2500000000) or (toDouble(winp) >= 200000000)), \"❌Fail\", else: \"✅Pass\"), `LCP` = wlcp, `INP` = winp, `CLS` = round(wcls,decimals:4)\n| sort Count desc\n| limit 25"
+      },
+      "action": "dynatrace.automations:execute-dql-query",
+      "position": {
+        "x": 2,
+        "y": 1
+      },
+      "description": "Make use of Dynatrace Grail data in your workflow.",
+      "predecessors": []
+    },
+    "largest_contentful_paint_trend": {
+      "name": "largest_contentful_paint_trend",
+      "input": {
+        "query": "fetch user.events, from: @d-1d, to: @d\n| filter characteristics.has_page_summary\n| makeTimeseries  \n  p75LCP = percentile(web_vitals.largest_contentful_paint, 75)\n| limit 25"
+      },
+      "action": "dynatrace.automations:execute-dql-query",
+      "position": {
+        "x": 3,
+        "y": 1
+      },
+      "description": "Make use of Dynatrace Grail data in your workflow.",
+      "predecessors": []
+    },
+    "interaction_to_next_paint_trend": {
+      "name": "interaction_to_next_paint_trend",
+      "input": {
+        "query": "fetch user.events, from: @d-1d, to: @d\n| filter characteristics.has_page_summary\n| makeTimeseries  \n  p75INP = percentile(web_vitals.interaction_to_next_paint , 75)\n| limit 25"
+      },
+      "action": "dynatrace.automations:execute-dql-query",
+      "position": {
+        "x": 4,
+        "y": 1
+      },
+      "description": "Make use of Dynatrace Grail data in your workflow.",
+      "predecessors": []
+    },
+    "content_layout_shift_trend": {
+      "name": "content_layout_shift_trend",
+      "input": {
+        "query": "fetch user.events, from: @d-1d, to: @d\n| filter characteristics.has_page_summary\n| makeTimeseries  \n  p75CLS = percentile(web_vitals.cumulative_layout_shift, 75)\n| limit 25"
+      },
+      "action": "dynatrace.automations:execute-dql-query",
+      "position": {
+        "x": 5,
+        "y": 1
+      },
+      "description": "Make use of Dynatrace Grail data in your workflow.",
+      "predecessors": []
+    },
+    "content_layout_shift_prompt_2": {
+      "name": "content_layout_shift_prompt_2",
+      "input": {
+        "config": "disabled",
+        "prompt": "Provide a simple yes/no answer with no other details for the following use case:\n## Content Layout Shift KPI Analysis Report",
+        "autoTrim": true,
+        "instruction": "Simple yes/no, does the analysis need my attention?",
+        "supplementary": "Format examples in tables instead of bulleted lists.\nWhere applicable convert units for readability, e.g. 1000000000 bytes is 1 TiB.\nWhere applicable show relative percentages, e.g. 100 used and 1000 allocatable is 10% utilized.\nUse this analysis:\n{{result(\"content_layout_shift\")[\"records\"]}}"
+      },
+      "action": "dynatrace.davis.copilot.workflow.actions:davis-copilot",
+      "position": {
+        "x": -6,
+        "y": 2
+      },
+      "conditions": {
+        "states": {
+          "content_layout_shift": "OK"
+        }
+      },
+      "description": "Prompt the Dynatrace Intelligence generative AI",
+      "predecessors": [
+        "content_layout_shift"
+      ]
+    },
+    "interaction_to_next_paint_prompt_2": {
+      "name": "interaction_to_next_paint_prompt_2",
+      "input": {
+        "config": "disabled",
+        "prompt": "Provide a simple yes/no answer with no other details for the following use case:\n## Interaction To Next Paint KPI Analysis Report",
+        "autoTrim": true,
+        "instruction": "Simple yes/no, does the analysis need my attention?",
+        "supplementary": "Format examples in tables instead of bulleted lists.\nWhere applicable convert units for readability, e.g. 1000000000 bytes is 1 TiB.\nWhere applicable show relative percentages, e.g. 100 used and 1000 allocatable is 10% utilized.\nUse this analysis:\n{{result(\"interaction_to_next_paint\")[\"records\"]}}"
+      },
+      "action": "dynatrace.davis.copilot.workflow.actions:davis-copilot",
+      "position": {
+        "x": -5,
+        "y": 2
+      },
+      "conditions": {
+        "states": {
+          "interaction_to_next_paint": "OK"
+        }
+      },
+      "description": "Prompt the Dynatrace Intelligence generative AI",
+      "predecessors": [
+        "interaction_to_next_paint"
+      ]
+    },
+    "largest_contentful_paint_prompt_2": {
+      "name": "largest_contentful_paint_prompt_2",
+      "input": {
+        "config": "disabled",
+        "prompt": "Provide a simple yes/no answer with no other details for the following use case:\n## Largest Contentful Paint KPI Analysis Report",
+        "autoTrim": true,
+        "instruction": "Simple yes/no, does the analysis need my attention?",
+        "supplementary": "Format examples in tables instead of bulleted lists.\nWhere applicable convert units for readability, e.g. 1000000000 bytes is 1 TiB.\nWhere applicable show relative percentages, e.g. 100 used and 1000 allocatable is 10% utilized.\nUse this analysis:\n{{result(\"largest_contentful_paint\")[\"records\"]}}"
+      },
+      "action": "dynatrace.davis.copilot.workflow.actions:davis-copilot",
+      "position": {
+        "x": -4,
+        "y": 2
+      },
+      "conditions": {
+        "states": {
+          "largest_contentful_paint": "OK"
+        }
+      },
+      "description": "Prompt the Dynatrace Intelligence generative AI",
+      "predecessors": [
+        "largest_contentful_paint"
+      ]
+    },
+    "error_count_prompt_2": {
+      "name": "error_count_prompt_2",
+      "input": {
+        "config": "disabled",
+        "prompt": "Provide a simple yes/no answer with no other details for the following use case:\n## Error Count KPI Analysis Report",
+        "autoTrim": true,
+        "instruction": "Simple yes/no, does the analysis need my attention?",
+        "supplementary": "Format examples in tables instead of bulleted lists.\nWhere applicable convert units for readability, e.g. 1000000000 bytes is 1 TiB.\nWhere applicable show relative percentages, e.g. 100 used and 1000 allocatable is 10% utilized.\nUse this analysis:\n{{result(\"error_count\")[\"records\"]}}"
+      },
+      "action": "dynatrace.davis.copilot.workflow.actions:davis-copilot",
+      "position": {
+        "x": -3,
+        "y": 2
+      },
+      "conditions": {
+        "states": {
+          "error_count": "OK"
+        }
+      },
+      "description": "Prompt the Dynatrace Intelligence generative AI",
+      "predecessors": [
+        "error_count"
+      ]
+    },
+    "page_load_time_prompt_2": {
+      "name": "page_load_time_prompt_2",
+      "input": {
+        "config": "disabled",
+        "prompt": "Provide a simple yes/no answer with no other details for the following use case:\n## Page Load Time KPI Analysis Report",
+        "autoTrim": true,
+        "instruction": "Simple yes/no, does the analysis need my attention?",
+        "supplementary": "Format examples in tables instead of bulleted lists.\nWhere applicable convert units for readability, e.g. 1000000000 bytes is 1 TiB.\nWhere applicable show relative percentages, e.g. 100 used and 1000 allocatable is 10% utilized.\nUse this analysis:\n{{result(\"page_load_time\")[\"records\"]}}"
+      },
+      "action": "dynatrace.davis.copilot.workflow.actions:davis-copilot",
+      "position": {
+        "x": -2,
+        "y": 2
+      },
+      "conditions": {
+        "states": {
+          "page_load_time": "OK"
+        }
+      },
+      "description": "Prompt the Dynatrace Intelligence generative AI",
+      "predecessors": [
+        "page_load_time"
+      ]
+    },
+    "navigations_prompt_2": {
+      "name": "navigations_prompt_2",
+      "input": {
+        "config": "disabled",
+        "prompt": "Provide a simple yes/no answer with no other details for the following use case:\n## Navigations KPI Analysis Report",
+        "autoTrim": true,
+        "instruction": "Simple yes/no, does the analysis need my attention?",
+        "supplementary": "Format examples in tables instead of bulleted lists.\nWhere applicable convert units for readability, e.g. 1000000000 bytes is 1 TiB.\nWhere applicable show relative percentages, e.g. 100 used and 1000 allocatable is 10% utilized.\nUse this analysis:\n{{result(\"navigations\")[\"records\"]}}"
+      },
+      "action": "dynatrace.davis.copilot.workflow.actions:davis-copilot",
+      "position": {
+        "x": -1,
+        "y": 2
+      },
+      "conditions": {
+        "states": {
+          "navigations": "OK"
+        }
+      },
+      "description": "Prompt the Dynatrace Intelligence generative AI",
+      "predecessors": [
+        "navigations"
+      ]
+    },
+    "user_actions_prompt_2": {
+      "name": "user_actions_prompt_2",
+      "input": {
+        "config": "disabled",
+        "prompt": "Provide a simple yes/no answer with no other details for the following use case:\n## User Actions KPI Analysis Report",
+        "autoTrim": true,
+        "instruction": "Simple yes/no, does the analysis need my attention?",
+        "supplementary": "Format examples in tables instead of bulleted lists.\nWhere applicable convert units for readability, e.g. 1000000000 bytes is 1 TiB.\nWhere applicable show relative percentages, e.g. 100 used and 1000 allocatable is 10% utilized.\nUse this analysis:\n{{result(\"user_actions\")[\"records\"]}}"
+      },
+      "action": "dynatrace.davis.copilot.workflow.actions:davis-copilot",
+      "position": {
+        "x": 0,
+        "y": 2
+      },
+      "conditions": {
+        "states": {
+          "user_actions": "OK"
+        }
+      },
+      "description": "Prompt the Dynatrace Intelligence generative AI",
+      "predecessors": [
+        "user_actions"
+      ]
+    },
+    "cwv_health_prompt_2": {
+      "name": "cwv_health_prompt_2",
+      "input": {
+        "config": "disabled",
+        "prompt": "Provide a simple yes/no answer with no other details for the following use case:\n## CWV Health KPI Analysis Report",
+        "autoTrim": true,
+        "instruction": "Simple yes/no, does the analysis need my attention?",
+        "supplementary": "Format examples in tables instead of bulleted lists.\nWhere applicable convert units for readability, e.g. 1000000000 bytes is 1 TiB.\nWhere applicable show relative percentages, e.g. 100 used and 1000 allocatable is 10% utilized.\nUse this analysis:\n{{result(\"cwv_health\")[\"records\"]}}"
+      },
+      "action": "dynatrace.davis.copilot.workflow.actions:davis-copilot",
+      "position": {
+        "x": 1,
+        "y": 2
+      },
+      "conditions": {
+        "states": {
+          "cwv_health": "OK"
+        }
+      },
+      "description": "Prompt the Dynatrace Intelligence generative AI",
+      "predecessors": [
+        "cwv_health"
+      ]
+    },
+    "applications_prompt_2": {
+      "name": "applications_prompt_2",
+      "input": {
+        "config": "disabled",
+        "prompt": "Provide a simple yes/no answer with no other details for the following use case:\n## Applications KPI Analysis Report",
+        "autoTrim": true,
+        "instruction": "Simple yes/no, does the analysis need my attention?",
+        "supplementary": "Format examples in tables instead of bulleted lists.\nWhere applicable convert units for readability, e.g. 1000000000 bytes is 1 TiB.\nWhere applicable show relative percentages, e.g. 100 used and 1000 allocatable is 10% utilized.\nUse this analysis:\n{{result(\"applications\")[\"records\"]}}"
+      },
+      "action": "dynatrace.davis.copilot.workflow.actions:davis-copilot",
+      "position": {
+        "x": 2,
+        "y": 2
+      },
+      "conditions": {
+        "states": {
+          "applications": "OK"
+        }
+      },
+      "description": "Prompt the Dynatrace Intelligence generative AI",
+      "predecessors": [
+        "applications"
+      ]
+    },
+    "largest_contentful_paint_trend_prompt_2": {
+      "name": "largest_contentful_paint_trend_prompt_2",
+      "input": {
+        "config": "disabled",
+        "prompt": "Provide a simple yes/no answer with no other details for the following use case:\n## Largest Contentful Paint Trend KPI Analysis Report",
+        "autoTrim": true,
+        "instruction": "Simple yes/no, does the analysis need my attention?",
+        "supplementary": "Format examples in tables instead of bulleted lists.\nWhere applicable convert units for readability, e.g. 1000000000 bytes is 1 TiB.\nWhere applicable show relative percentages, e.g. 100 used and 1000 allocatable is 10% utilized.\nUse this analysis:\n{{result(\"largest_contentful_paint_trend\")[\"records\"]}}"
+      },
+      "action": "dynatrace.davis.copilot.workflow.actions:davis-copilot",
+      "position": {
+        "x": 3,
+        "y": 2
+      },
+      "conditions": {
+        "states": {
+          "largest_contentful_paint_trend": "OK"
+        }
+      },
+      "description": "Prompt the Dynatrace Intelligence generative AI",
+      "predecessors": [
+        "largest_contentful_paint_trend"
+      ]
+    },
+    "interaction_to_next_paint_trend_prompt_2": {
+      "name": "interaction_to_next_paint_trend_prompt_2",
+      "input": {
+        "config": "disabled",
+        "prompt": "Provide a simple yes/no answer with no other details for the following use case:\n## Interaction To Next Paint Trend KPI Analysis Report",
+        "autoTrim": true,
+        "instruction": "Simple yes/no, does the analysis need my attention?",
+        "supplementary": "Format examples in tables instead of bulleted lists.\nWhere applicable convert units for readability, e.g. 1000000000 bytes is 1 TiB.\nWhere applicable show relative percentages, e.g. 100 used and 1000 allocatable is 10% utilized.\nUse this analysis:\n{{result(\"interaction_to_next_paint_trend\")[\"records\"]}}"
+      },
+      "action": "dynatrace.davis.copilot.workflow.actions:davis-copilot",
+      "position": {
+        "x": 4,
+        "y": 2
+      },
+      "conditions": {
+        "states": {
+          "interaction_to_next_paint_trend": "OK"
+        }
+      },
+      "description": "Prompt the Dynatrace Intelligence generative AI",
+      "predecessors": [
+        "interaction_to_next_paint_trend"
+      ]
+    },
+    "content_layout_shift_trend_prompt_2": {
+      "name": "content_layout_shift_trend_prompt_2",
+      "input": {
+        "config": "disabled",
+        "prompt": "Provide a simple yes/no answer with no other details for the following use case:\n## Content Layout Shift Trend KPI Analysis Report",
+        "autoTrim": true,
+        "instruction": "Simple yes/no, does the analysis need my attention?",
+        "supplementary": "Format examples in tables instead of bulleted lists.\nWhere applicable convert units for readability, e.g. 1000000000 bytes is 1 TiB.\nWhere applicable show relative percentages, e.g. 100 used and 1000 allocatable is 10% utilized.\nUse this analysis:\n{{result(\"content_layout_shift_trend\")[\"records\"]}}"
+      },
+      "action": "dynatrace.davis.copilot.workflow.actions:davis-copilot",
+      "position": {
+        "x": 5,
+        "y": 2
+      },
+      "conditions": {
+        "states": {
+          "content_layout_shift_trend": "OK"
+        }
+      },
+      "description": "Prompt the Dynatrace Intelligence generative AI",
+      "predecessors": [
+        "content_layout_shift_trend"
+      ]
+    },
+    "content_layout_shift_prompt": {
+      "name": "content_layout_shift_prompt",
+      "input": {
+        "config": "disabled",
+        "prompt": "Provide a report for the following use case:\n## Content Layout Shift Analysis Report\n",
+        "autoTrim": true,
+        "instruction": "Provide a Summary, Insights, Observations and Recommendations.",
+        "supplementary": "Format examples in tables instead of bulleted lists.\nWhere applicable convert units for readability, e.g. 1000000000 bytes is 1 TiB.\nWhere applicable show relative percentages, e.g. 100 used and 1000 allocatable is 10% utilized.\nUse this analysis:\n{{result(\"content_layout_shift\")[\"records\"]}}\n"
+      },
+      "action": "dynatrace.davis.copilot.workflow.actions:davis-copilot",
+      "position": {
+        "x": -6,
+        "y": 3
+      },
+      "conditions": {
+        "states": {
+          "content_layout_shift": "OK"
+        }
+      },
+      "description": "Prompt the Dynatrace Intelligence generative AI",
+      "predecessors": [
+        "content_layout_shift"
+      ]
+    },
+    "interaction_to_next_paint_prompt": {
+      "name": "interaction_to_next_paint_prompt",
+      "input": {
+        "config": "disabled",
+        "prompt": "Provide a report for the following use case:\n## Interaction To Next Paint Analysis Report\n",
+        "autoTrim": true,
+        "instruction": "Provide a Summary, Insights, Observations and Recommendations.",
+        "supplementary": "Format examples in tables instead of bulleted lists.\nWhere applicable convert units for readability, e.g. 1000000000 bytes is 1 TiB.\nWhere applicable show relative percentages, e.g. 100 used and 1000 allocatable is 10% utilized.\nUse this analysis:\n{{result(\"interaction_to_next_paint\")[\"records\"]}}\n"
+      },
+      "action": "dynatrace.davis.copilot.workflow.actions:davis-copilot",
+      "position": {
+        "x": -5,
+        "y": 3
+      },
+      "conditions": {
+        "states": {
+          "interaction_to_next_paint": "OK"
+        }
+      },
+      "description": "Prompt the Dynatrace Intelligence generative AI",
+      "predecessors": [
+        "interaction_to_next_paint"
+      ]
+    },
+    "largest_contentful_paint_prompt": {
+      "name": "largest_contentful_paint_prompt",
+      "input": {
+        "config": "disabled",
+        "prompt": "Provide a report for the following use case:\n## Largest Contentful Paint Analysis Report\n",
+        "autoTrim": true,
+        "instruction": "Provide a Summary, Insights, Observations and Recommendations.",
+        "supplementary": "Format examples in tables instead of bulleted lists.\nWhere applicable convert units for readability, e.g. 1000000000 bytes is 1 TiB.\nWhere applicable show relative percentages, e.g. 100 used and 1000 allocatable is 10% utilized.\nUse this analysis:\n{{result(\"largest_contentful_paint\")[\"records\"]}}\n"
+      },
+      "action": "dynatrace.davis.copilot.workflow.actions:davis-copilot",
+      "position": {
+        "x": -4,
+        "y": 3
+      },
+      "conditions": {
+        "states": {
+          "largest_contentful_paint": "OK"
+        }
+      },
+      "description": "Prompt the Dynatrace Intelligence generative AI",
+      "predecessors": [
+        "largest_contentful_paint"
+      ]
+    },
+    "error_count_prompt": {
+      "name": "error_count_prompt",
+      "input": {
+        "config": "disabled",
+        "prompt": "Provide a report for the following use case:\n## Error Count Analysis Report\n",
+        "autoTrim": true,
+        "instruction": "Provide a Summary, Insights, Observations and Recommendations.",
+        "supplementary": "Format examples in tables instead of bulleted lists.\nWhere applicable convert units for readability, e.g. 1000000000 bytes is 1 TiB.\nWhere applicable show relative percentages, e.g. 100 used and 1000 allocatable is 10% utilized.\nUse this analysis:\n{{result(\"error_count\")[\"records\"]}}\n"
+      },
+      "action": "dynatrace.davis.copilot.workflow.actions:davis-copilot",
+      "position": {
+        "x": -3,
+        "y": 3
+      },
+      "conditions": {
+        "states": {
+          "error_count": "OK"
+        }
+      },
+      "description": "Prompt the Dynatrace Intelligence generative AI",
+      "predecessors": [
+        "error_count"
+      ]
+    },
+    "page_load_time_prompt": {
+      "name": "page_load_time_prompt",
+      "input": {
+        "config": "disabled",
+        "prompt": "Provide a report for the following use case:\n## Page Load Time Analysis Report\n",
+        "autoTrim": true,
+        "instruction": "Provide a Summary, Insights, Observations and Recommendations.",
+        "supplementary": "Format examples in tables instead of bulleted lists.\nWhere applicable convert units for readability, e.g. 1000000000 bytes is 1 TiB.\nWhere applicable show relative percentages, e.g. 100 used and 1000 allocatable is 10% utilized.\nUse this analysis:\n{{result(\"page_load_time\")[\"records\"]}}\n"
+      },
+      "action": "dynatrace.davis.copilot.workflow.actions:davis-copilot",
+      "position": {
+        "x": -2,
+        "y": 3
+      },
+      "conditions": {
+        "states": {
+          "page_load_time": "OK"
+        }
+      },
+      "description": "Prompt the Dynatrace Intelligence generative AI",
+      "predecessors": [
+        "page_load_time"
+      ]
+    },
+    "navigations_prompt": {
+      "name": "navigations_prompt",
+      "input": {
+        "config": "disabled",
+        "prompt": "Provide a report for the following use case:\n## Navigations Analysis Report\n",
+        "autoTrim": true,
+        "instruction": "Provide a Summary, Insights, Observations and Recommendations.",
+        "supplementary": "Format examples in tables instead of bulleted lists.\nWhere applicable convert units for readability, e.g. 1000000000 bytes is 1 TiB.\nWhere applicable show relative percentages, e.g. 100 used and 1000 allocatable is 10% utilized.\nUse this analysis:\n{{result(\"navigations\")[\"records\"]}}\n"
+      },
+      "action": "dynatrace.davis.copilot.workflow.actions:davis-copilot",
+      "position": {
+        "x": -1,
+        "y": 3
+      },
+      "conditions": {
+        "states": {
+          "navigations": "OK"
+        }
+      },
+      "description": "Prompt the Dynatrace Intelligence generative AI",
+      "predecessors": [
+        "navigations"
+      ]
+    },
+    "user_actions_prompt": {
+      "name": "user_actions_prompt",
+      "input": {
+        "config": "disabled",
+        "prompt": "Provide a report for the following use case:\n## User Actions Analysis Report\n",
+        "autoTrim": true,
+        "instruction": "Provide a Summary, Insights, Observations and Recommendations.",
+        "supplementary": "Format examples in tables instead of bulleted lists.\nWhere applicable convert units for readability, e.g. 1000000000 bytes is 1 TiB.\nWhere applicable show relative percentages, e.g. 100 used and 1000 allocatable is 10% utilized.\nUse this analysis:\n{{result(\"user_actions\")[\"records\"]}}\n"
+      },
+      "action": "dynatrace.davis.copilot.workflow.actions:davis-copilot",
+      "position": {
+        "x": 0,
+        "y": 3
+      },
+      "conditions": {
+        "states": {
+          "user_actions": "OK"
+        }
+      },
+      "description": "Prompt the Dynatrace Intelligence generative AI",
+      "predecessors": [
+        "user_actions"
+      ]
+    },
+    "cwv_health_prompt": {
+      "name": "cwv_health_prompt",
+      "input": {
+        "config": "disabled",
+        "prompt": "Provide a report for the following use case:\n## CWV Health Analysis Report\n",
+        "autoTrim": true,
+        "instruction": "Provide a Summary, Insights, Observations and Recommendations.",
+        "supplementary": "Format examples in tables instead of bulleted lists.\nWhere applicable convert units for readability, e.g. 1000000000 bytes is 1 TiB.\nWhere applicable show relative percentages, e.g. 100 used and 1000 allocatable is 10% utilized.\nUse this analysis:\n{{result(\"cwv_health\")[\"records\"]}}\n"
+      },
+      "action": "dynatrace.davis.copilot.workflow.actions:davis-copilot",
+      "position": {
+        "x": 1,
+        "y": 3
+      },
+      "conditions": {
+        "states": {
+          "cwv_health": "OK"
+        }
+      },
+      "description": "Prompt the Dynatrace Intelligence generative AI",
+      "predecessors": [
+        "cwv_health"
+      ]
+    },
+    "applications_prompt": {
+      "name": "applications_prompt",
+      "input": {
+        "config": "disabled",
+        "prompt": "Provide a report for the following use case:\n## Applications Analysis Report\n",
+        "autoTrim": true,
+        "instruction": "Provide a Summary, Insights, Observations and Recommendations.",
+        "supplementary": "Format examples in tables instead of bulleted lists.\nWhere applicable convert units for readability, e.g. 1000000000 bytes is 1 TiB.\nWhere applicable show relative percentages, e.g. 100 used and 1000 allocatable is 10% utilized.\nUse this analysis:\n{{result(\"applications\")[\"records\"]}}\n"
+      },
+      "action": "dynatrace.davis.copilot.workflow.actions:davis-copilot",
+      "position": {
+        "x": 2,
+        "y": 3
+      },
+      "conditions": {
+        "states": {
+          "applications": "OK"
+        }
+      },
+      "description": "Prompt the Dynatrace Intelligence generative AI",
+      "predecessors": [
+        "applications"
+      ]
+    },
+    "largest_contentful_paint_trend_prompt": {
+      "name": "largest_contentful_paint_trend_prompt",
+      "input": {
+        "config": "disabled",
+        "prompt": "Provide a report for the following use case:\n## Largest Contentful Paint Trend Analysis Report\n",
+        "autoTrim": true,
+        "instruction": "Provide a Summary, Insights, Observations and Recommendations.",
+        "supplementary": "Format examples in tables instead of bulleted lists.\nWhere applicable convert units for readability, e.g. 1000000000 bytes is 1 TiB.\nWhere applicable show relative percentages, e.g. 100 used and 1000 allocatable is 10% utilized.\nUse this analysis:\n{{result(\"largest_contentful_paint_trend\")[\"records\"]}}\n"
+      },
+      "action": "dynatrace.davis.copilot.workflow.actions:davis-copilot",
+      "position": {
+        "x": 3,
+        "y": 3
+      },
+      "conditions": {
+        "states": {
+          "largest_contentful_paint_trend": "OK"
+        }
+      },
+      "description": "Prompt the Dynatrace Intelligence generative AI",
+      "predecessors": [
+        "largest_contentful_paint_trend"
+      ]
+    },
+    "interaction_to_next_paint_trend_prompt": {
+      "name": "interaction_to_next_paint_trend_prompt",
+      "input": {
+        "config": "disabled",
+        "prompt": "Provide a report for the following use case:\n## Interaction To Next Paint Trend Analysis Report\n",
+        "autoTrim": true,
+        "instruction": "Provide a Summary, Insights, Observations and Recommendations.",
+        "supplementary": "Format examples in tables instead of bulleted lists.\nWhere applicable convert units for readability, e.g. 1000000000 bytes is 1 TiB.\nWhere applicable show relative percentages, e.g. 100 used and 1000 allocatable is 10% utilized.\nUse this analysis:\n{{result(\"interaction_to_next_paint_trend\")[\"records\"]}}\n"
+      },
+      "action": "dynatrace.davis.copilot.workflow.actions:davis-copilot",
+      "position": {
+        "x": 4,
+        "y": 3
+      },
+      "conditions": {
+        "states": {
+          "interaction_to_next_paint_trend": "OK"
+        }
+      },
+      "description": "Prompt the Dynatrace Intelligence generative AI",
+      "predecessors": [
+        "interaction_to_next_paint_trend"
+      ]
+    },
+    "content_layout_shift_trend_prompt": {
+      "name": "content_layout_shift_trend_prompt",
+      "input": {
+        "config": "disabled",
+        "prompt": "Provide a report for the following use case:\n## Content Layout Shift Trend Analysis Report\n",
+        "autoTrim": true,
+        "instruction": "Provide a Summary, Insights, Observations and Recommendations.",
+        "supplementary": "Format examples in tables instead of bulleted lists.\nWhere applicable convert units for readability, e.g. 1000000000 bytes is 1 TiB.\nWhere applicable show relative percentages, e.g. 100 used and 1000 allocatable is 10% utilized.\nUse this analysis:\n{{result(\"content_layout_shift_trend\")[\"records\"]}}\n"
+      },
+      "action": "dynatrace.davis.copilot.workflow.actions:davis-copilot",
+      "position": {
+        "x": 5,
+        "y": 3
+      },
+      "conditions": {
+        "states": {
+          "content_layout_shift_trend": "OK"
+        }
+      },
+      "description": "Prompt the Dynatrace Intelligence generative AI",
+      "predecessors": [
+        "content_layout_shift_trend"
+      ]
+    },
+    "overall_prompt": {
+      "name": "overall_prompt",
+      "input": {
+        "config": "disabled",
+        "prompt": "Provide a report for the following use case:\n## Frontend Observability for CWV Dashboard Executive Report",
+        "autoTrim": true,
+        "instruction": "Provide a Summary, Insights, Observations and Recommendations.",
+        "supplementary": "Format examples in tables instead of bulleted lists.\nUse this analysis:\n{{result(\"content_layout_shift_prompt\").text}}\n{{result(\"interaction_to_next_paint_prompt\").text}}\n{{result(\"largest_contentful_paint_prompt\").text}}\n{{result(\"error_count_prompt\").text}}\n{{result(\"page_load_time_prompt\").text}}\n{{result(\"navigations_prompt\").text}}\n{{result(\"user_actions_prompt\").text}}\n{{result(\"cwv_health_prompt\").text}}\n{{result(\"applications_prompt\").text}}\n{{result(\"largest_contentful_paint_trend_prompt\").text}}\n{{result(\"interaction_to_next_paint_trend_prompt\").text}}\n{{result(\"content_layout_shift_trend_prompt\").text}}\n\n"
+      },
+      "action": "dynatrace.davis.copilot.workflow.actions:davis-copilot",
+      "position": {
+        "x": 0,
+        "y": 4
+      },
+      "conditions": {
+        "states": {
+          "content_layout_shift_prompt": "OK",
+          "content_layout_shift_prompt_2": "OK",
+          "interaction_to_next_paint_prompt": "OK",
+          "interaction_to_next_paint_prompt_2": "OK",
+          "largest_contentful_paint_prompt": "OK",
+          "largest_contentful_paint_prompt_2": "OK",
+          "error_count_prompt": "OK",
+          "error_count_prompt_2": "OK",
+          "page_load_time_prompt": "OK",
+          "page_load_time_prompt_2": "OK",
+          "navigations_prompt": "OK",
+          "navigations_prompt_2": "OK",
+          "user_actions_prompt": "OK",
+          "user_actions_prompt_2": "OK",
+          "cwv_health_prompt": "OK",
+          "cwv_health_prompt_2": "OK",
+          "applications_prompt": "OK",
+          "applications_prompt_2": "OK",
+          "largest_contentful_paint_trend_prompt": "OK",
+          "largest_contentful_paint_trend_prompt_2": "OK",
+          "interaction_to_next_paint_trend_prompt": "OK",
+          "interaction_to_next_paint_trend_prompt_2": "OK",
+          "content_layout_shift_trend_prompt": "OK",
+          "content_layout_shift_trend_prompt_2": "OK"
+        }
+      },
+      "description": "Prompt the Dynatrace Intelligence generative AI",
+      "predecessors": [
+        "content_layout_shift_prompt",
+        "content_layout_shift_prompt_2",
+        "interaction_to_next_paint_prompt",
+        "interaction_to_next_paint_prompt_2",
+        "largest_contentful_paint_prompt",
+        "largest_contentful_paint_prompt_2",
+        "error_count_prompt",
+        "error_count_prompt_2",
+        "page_load_time_prompt",
+        "page_load_time_prompt_2",
+        "navigations_prompt",
+        "navigations_prompt_2",
+        "user_actions_prompt",
+        "user_actions_prompt_2",
+        "cwv_health_prompt",
+        "cwv_health_prompt_2",
+        "applications_prompt",
+        "applications_prompt_2",
+        "largest_contentful_paint_trend_prompt",
+        "largest_contentful_paint_trend_prompt_2",
+        "interaction_to_next_paint_trend_prompt",
+        "interaction_to_next_paint_trend_prompt_2",
+        "content_layout_shift_trend_prompt",
+        "content_layout_shift_trend_prompt_2"
+      ]
+    },
+    "email_exec_report": {
+      "name": "email_exec_report",
+      "input": {
+        "cc": [],
+        "to": [
+          "john.kelly@dynatrace.com"
+        ],
+        "bcc": [],
+        "content": "#\n# Dashboard Overall Summary \n#\n{{result(\"overall_prompt\").text}}\n",
+        "subject": "Dynatrace Frontend Observability for CWV Dashboard Executive Summary Report"
+      },
+      "action": "dynatrace.email:send-email",
+      "position": {
+        "x": 1,
+        "y": 5
+      },
+      "conditions": {
+        "states": {
+          "overall_prompt": "OK"
+        }
+      },
+      "description": "Send email",
+      "predecessors": [
+        "overall_prompt"
+      ]
+    },
+    "email_dashboard_report": {
+      "name": "email_dashboard_report",
+      "input": {
+        "cc": [],
+        "to": [
+          "john.kelly@dynatrace.com"
+        ],
+        "bcc": [],
+        "content": "#\n# Dashboard Overall Summary\n#\n{{result(\"overall_prompt\").text}}\n#\n# Dashboard Tiles That Need Attention \n#\n{% if result(\"content_layout_shift_prompt_2.text\") == \"Yes.\" %}\n{{result(\"content_layout_shift_prompt\").text}}\n{% endif %}\n{% if result(\"interaction_to_next_paint_prompt_2.text\") == \"Yes.\" %}\n{{result(\"interaction_to_next_paint_prompt\").text}}\n{% endif %}\n{% if result(\"largest_contentful_paint_prompt_2.text\") == \"Yes.\" %}\n{{result(\"largest_contentful_paint_prompt\").text}}\n{% endif %}\n{% if result(\"error_count_prompt_2.text\") == \"Yes.\" %}\n{{result(\"error_count_prompt\").text}}\n{% endif %}\n{% if result(\"page_load_time_prompt_2.text\") == \"Yes.\" %}\n{{result(\"page_load_time_prompt\").text}}\n{% endif %}\n{% if result(\"navigations_prompt_2.text\") == \"Yes.\" %}\n{{result(\"navigations_prompt\").text}}\n{% endif %}\n{% if result(\"user_actions_prompt_2.text\") == \"Yes.\" %}\n{{result(\"user_actions_prompt\").text}}\n{% endif %}\n{% if result(\"cwv_health_prompt_2.text\") == \"Yes.\" %}\n{{result(\"cwv_health_prompt\").text}}\n{% endif %}\n{% if result(\"applications_prompt_2.text\") == \"Yes.\" %}\n{{result(\"applications_prompt\").text}}\n{% endif %}\n{% if result(\"largest_contentful_paint_trend_prompt_2.text\") == \"Yes.\" %}\n{{result(\"largest_contentful_paint_trend_prompt\").text}}\n{% endif %}\n{% if result(\"interaction_to_next_paint_trend_prompt_2.text\") == \"Yes.\" %}\n{{result(\"interaction_to_next_paint_trend_prompt\").text}}\n{% endif %}\n{% if result(\"content_layout_shift_trend_prompt_2.text\") == \"Yes.\" %}\n{{result(\"content_layout_shift_trend_prompt\").text}}\n{% endif %}",
+        "subject": "Dynatrace Frontend Observability for CWV Dashboard Tile Report"
+      },
+      "action": "dynatrace.email:send-email",
+      "position": {
+        "x": -1,
+        "y": 5
+      },
+      "conditions": {
+        "states": {
+          "overall_prompt": "OK"
+        }
+      },
+      "description": "Send email",
+      "predecessors": [
+        "overall_prompt"
+      ]
+    }
+  }
+}

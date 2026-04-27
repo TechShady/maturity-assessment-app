@@ -1,0 +1,19 @@
+﻿{
+  "id": "30688d2b-d6ef-4aac-9761-de88820918cb",
+  "name": "Frontend Observability for CWV - jk",
+  "type": "dashboard",
+  "version": 2,
+  "owner": "1f41bd32-2ce1-408d-b6e2-efb6a36f870d",
+  "isPrivate": true,
+  "modificationInfo": {
+    "createdBy": "1f41bd32-2ce1-408d-b6e2-efb6a36f870d",
+    "createdTime": "2026-04-23T20:20:57.194Z",
+    "lastModifiedBy": "1f41bd32-2ce1-408d-b6e2-efb6a36f870d",
+    "lastModifiedTime": "2026-04-23T20:21:11.902Z"
+  },
+  "access": [
+    "read",
+    "write",
+    "delete"
+  ]
+}

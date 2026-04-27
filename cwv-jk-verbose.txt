@@ -1,0 +1,33 @@
+﻿dtctl : Using config file: C:\Users\john.kelly\AppData\Local\dtctl\config
+At line:1 char:11
++ $result = dtctl describe dashboard 30688d2b-d6ef-4aac-9761-de88820918 ...
++           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Using config fi...al\dtctl\config 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+===> REQUEST <===
+GET https://guu84124.apps.dynatrace.com/platform/document/v1/documents/30688d2b
+-d6ef-4aac-9761-de88820918cb/metadata
+===> RESPONSE <===
+STATUS: 200 200 OK
+TIME: 1.4109095s
+{
+  "id": "30688d2b-d6ef-4aac-9761-de88820918cb",
+  "name": "Frontend Observability for CWV - jk",
+  "type": "dashboard",
+  "version": 10,
+  "owner": "1f41bd32-2ce1-408d-b6e2-efb6a36f870d",
+  "isPrivate": true,
+  "modificationInfo": {
+    "createdBy": "1f41bd32-2ce1-408d-b6e2-efb6a36f870d",
+    "createdTime": "2026-04-23T20:20:57.194Z",
+    "lastModifiedBy": "1f41bd32-2ce1-408d-b6e2-efb6a36f870d",
+    "lastModifiedTime": "2026-04-27T01:53:55.065Z"
+  },
+  "access": [
+    "read",
+    "delete",
+    "write"
+  ]
+}

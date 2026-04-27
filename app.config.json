@@ -1,0 +1,16 @@
+{
+  "$schema": "./.dt-app/app.config.schema.json",
+  "environmentUrl": "https://jeq40225.apps.dynatrace.com/",
+  "app": {
+    "name": "OTJ Assessment",
+    "version": "0.5.0",
+    "description": "Measure and visualize observability maturity across five levels with Dynatrace",
+    "id": "my.sre.maturity.assessment.app",
+    "scopes": [
+      { "name": "state:app-states:read", "comment": "read assessment state" },
+      { "name": "state:app-states:write", "comment": "write assessment state" },
+      { "name": "state:user-app-states:read", "comment": "read user assessment results" },
+      { "name": "state:user-app-states:write", "comment": "write user assessment results" }
+    ]
+  }
+}

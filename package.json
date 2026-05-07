@@ -1,6 +1,6 @@
 {
   "name": "maturity-assessment",
-  "version": "1.7.53",
+  "version": "1.7.54",
   "description": "Maturity Assessment - Measure, track, and visualize observability maturity across five levels powered by Dynatrace intelligence",
   "scripts": {
     "build": "dt-app build",

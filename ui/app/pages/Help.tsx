@@ -253,6 +253,19 @@ export const Help = () => {
           </ul>
         </div>
       </div>
+
+      <div className="help-footer">
+        <p>
+          Source code &amp; issue tracker:{" "}
+          <a
+            href="https://github.com/TechShady/maturity-assessment-app"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            github.com/TechShady/maturity-assessment-app
+          </a>
+        </p>
+      </div>
     </div>
   );
 };

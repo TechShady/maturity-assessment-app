@@ -58,6 +58,7 @@ export interface AssessmentOption {
 export interface AssessmentResult {
   id: string;
   timestamp: string;
+  user: string;
   teamName: string;
   categoryScores: Record<string, number>;
   overallScore: number;

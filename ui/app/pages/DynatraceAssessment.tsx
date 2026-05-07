@@ -1,37 +1,41 @@
-import React, { useState, useMemo, useRef } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@dynatrace/strato-components/buttons";
 import { Flex } from "@dynatrace/strato-components/layouts";
-import { TextInput } from "@dynatrace/strato-components-preview/forms";
 import { ProgressBar } from "@dynatrace/strato-components/content";
 import {
-  assessmentCategories,
-  calculateCategoryScore,
-  calculateOverallScore,
-  scoreToLevel,
-} from "../maturityModel";
+  dynatraceMaturityCategories,
+} from "../dynatraceMaturityModel";
+import { calculateCategoryScore, calculateOverallScore, scoreToLevel } from "../maturityModel";
 import { AssessmentAnswers, MaturityLevelColors, MaturityLevel } from "../types";
-import { saveAssessmentResult } from "../grailService";
+import { saveDtMaturityResult, getDtMaturityHistory, AssessmentRecord } from "../grailService";
 import "../styles/assessment.css";
 
-export const Assessment = () => {
+export const DynatraceAssessment = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState("");
-  const [teamName, setTeamName] = useState("");
   const [answers, setAnswers] = useState<AssessmentAnswers>({});
   const [currentCategoryIndex, setCurrentCategoryIndex] = useState(0);
   const [saving, setSaving] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState<{ user?: boolean; team?: boolean }>({});
-  const teamInputRef = useRef<HTMLDivElement>(null);
+  const [previousAnswers, setPreviousAnswers] = useState<Record<string, number> | null>(null);
+
+  const categories = dynatraceMaturityCategories;
+
+  useEffect(() => {
+    getDtMaturityHistory().then((history) => {
+      if (history.length > 0 && history[0].answers) {
+        setPreviousAnswers(history[0].answers);
+      }
+    });
+  }, []);
 
   const totalQuestions = useMemo(
-    () => assessmentCategories.reduce((sum, c) => sum + c.questions.length, 0),
+    () => categories.reduce((sum, c) => sum + c.questions.length, 0),
     []
   );
   const answeredCount = Object.keys(answers).length;
   const progressPercent = Math.round((answeredCount / totalQuestions) * 100);
 
-  const currentCategory = assessmentCategories[currentCategoryIndex];
+  const currentCategory = categories[currentCategoryIndex];
 
   const handleSelect = (questionId: string, value: number) => {
     setAnswers((prev) => ({ ...prev, [questionId]: value }));
@@ -40,35 +44,30 @@ export const Assessment = () => {
   const handleSubmit = async () => {
     setSaving(true);
     const categoryScores: Record<string, number> = {};
-    for (const cat of assessmentCategories) {
-      categoryScores[cat.id] = calculateCategoryScore(
-        cat.id,
-        answers,
-        assessmentCategories
-      );
+    for (const cat of categories) {
+      categoryScores[cat.id] = calculateCategoryScore(cat.id, answers, categories);
     }
-    const overallScore = calculateOverallScore(answers, assessmentCategories);
+    const overallScore = calculateOverallScore(answers, categories);
     const overallLevel = scoreToLevel(overallScore) as MaturityLevel;
 
     const result = {
       id: Date.now().toString(),
       timestamp: new Date().toISOString(),
-      user: user || "Anonymous",
-      teamName: teamName || "My Team",
+      user: "Dynatrace Maturity",
+      teamName: "Dynatrace Maturity",
       categoryScores,
       overallScore,
       overallLevel,
       answers,
     };
 
-    // Store in sessionStorage for the results page
     sessionStorage.setItem("sre-assessment-result", JSON.stringify(result));
+    sessionStorage.setItem("sre-assessment-type", "dynatrace");
 
-    // Save to Grail lookup table
     try {
-      await saveAssessmentResult(result);
+      await saveDtMaturityResult(result);
     } catch (e) {
-      console.error("Failed to save to Grail lookup table:", e);
+      console.error("Failed to save Dynatrace maturity result:", e);
     }
 
     setSaving(false);
@@ -78,47 +77,25 @@ export const Assessment = () => {
   const allCurrentAnswered = currentCategory.questions.every(
     (q) => answers[q.id] !== undefined
   );
-  const isLastCategory =
-    currentCategoryIndex === assessmentCategories.length - 1;
+  const isLastCategory = currentCategoryIndex === categories.length - 1;
 
   return (
     <div className="assess-container">
       <div className="assess-header">
-        <h1>Observability Transformation Journey Assessment</h1>
+        <h1>Dynatrace Maturity Assessment</h1>
         <p>
-          Answer each question to evaluate your team's observability practices across five
-          dimensions.
+          Evaluate your organization's Dynatrace deployment maturity, coverage, and usage
+          across key capabilities.
         </p>
-      </div>
-
-      <div className="team-input-section" ref={teamInputRef}>
-        <div className="field-wrapper">
-          <TextInput
-            placeholder="Enter your name *"
-            value={user}
-            onChange={(val) => { setUser(val); if (val.trim()) setFieldErrors((e) => ({ ...e, user: false })); }}
-          />
-          {fieldErrors.user && <span className="field-error">User name is required</span>}
-        </div>
-        <div className="field-wrapper">
-          <TextInput
-            placeholder="Enter team or service name *"
-            value={teamName}
-            onChange={(val) => { setTeamName(val); if (val.trim()) setFieldErrors((e) => ({ ...e, team: false })); }}
-          />
-          {fieldErrors.team && <span className="field-error">Team name is required</span>}
-        </div>
       </div>
 
       <div className="progress-section">
         <div className="progress-label">
           <span>
-            Category {currentCategoryIndex + 1} of{" "}
-            {assessmentCategories.length}
+            Category {currentCategoryIndex + 1} of {categories.length}
           </span>
           <span>
-            {answeredCount} / {totalQuestions} questions answered (
-            {progressPercent}%)
+            {answeredCount} / {totalQuestions} questions answered ({progressPercent}%)
           </span>
         </div>
         <ProgressBar value={progressPercent} />
@@ -135,8 +112,8 @@ export const Assessment = () => {
             <p className="question-text">{question.text}</p>
             {question.options.map((option) => {
               const isSelected = answers[question.id] === option.value;
-              const levelColor =
-                MaturityLevelColors[option.value as MaturityLevel];
+              const isPrevious = previousAnswers !== null && previousAnswers[question.id] === option.value;
+              const levelColor = MaturityLevelColors[option.value as MaturityLevel];
               return (
                 <div
                   key={option.value}
@@ -159,6 +136,7 @@ export const Assessment = () => {
                     {option.value}
                   </span>
                   <span className="option-label">{option.label}</span>
+                  {isPrevious && <span className="previous-badge">Previous</span>}
                 </div>
               );
             })}
@@ -171,9 +149,7 @@ export const Assessment = () => {
           {currentCategoryIndex > 0 && (
             <Button
               variant="emphasized"
-              onClick={() =>
-                setCurrentCategoryIndex((i) => Math.max(0, i - 1))
-              }
+              onClick={() => setCurrentCategoryIndex((i) => Math.max(0, i - 1))}
             >
               Previous
             </Button>
@@ -185,17 +161,7 @@ export const Assessment = () => {
               variant="emphasized"
               disabled={!allCurrentAnswered}
               onClick={() => {
-                const errors: { user?: boolean; team?: boolean } = {};
-                if (!user.trim()) errors.user = true;
-                if (!teamName.trim()) errors.team = true;
-                if (errors.user || errors.team) {
-                  setFieldErrors(errors);
-                  teamInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-                  return;
-                }
-                setCurrentCategoryIndex((i) =>
-                  Math.min(assessmentCategories.length - 1, i + 1)
-                );
+                setCurrentCategoryIndex((i) => Math.min(categories.length - 1, i + 1));
               }}
             >
               Next Category

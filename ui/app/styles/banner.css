@@ -1,0 +1,24 @@
+.customer-banner {
+  text-align: center;
+  padding: 8px 16px;
+  background: linear-gradient(90deg, rgba(20, 150, 255, 0.08), rgba(89, 196, 107, 0.08));
+  border-bottom: 1px solid rgba(20, 150, 255, 0.15);
+}
+
+.customer-banner-name {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #1496ff;
+}
+
+@media print {
+  .customer-banner {
+    background: #f0f7ff !important;
+    border-bottom-color: #cce0ff !important;
+  }
+
+  .customer-banner-name {
+    color: #0066cc !important;
+  }
+}

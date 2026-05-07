@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@dynatrace/strato-components/buttons";
 import {
@@ -7,6 +7,7 @@ import {
   MaturityLevelDescriptions,
   MaturityLevelColors,
 } from "../types";
+import { getDtMaturityHistory, getPersonalGrowthHistory } from "../grailService";
 import { journeyImage } from "../../assets/journeyImage";
 import "../styles/home.css";
 
@@ -25,11 +26,57 @@ const levels = [
   MaturityLevel.Level5,
 ];
 
+const levelHeaders: Record<MaturityLevel, string> = {
+  [MaturityLevel.Level1]: "Reactive",
+  [MaturityLevel.Level2]: "Foundational",
+  [MaturityLevel.Level3]: "Proficient",
+  [MaturityLevel.Level4]: "Strategic",
+  [MaturityLevel.Level5]: "Visionary",
+};
+
 export const Home = () => {
   const navigate = useNavigate();
+  const [reminder, setReminder] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const [dtRecords, pgRecords] = await Promise.all([
+          getDtMaturityHistory(),
+          getPersonalGrowthHistory(),
+        ]);
+        const records = [...dtRecords, ...pgRecords];
+
+        // Reminder: check if any user hasn't assessed in 30+ days
+        if (records.length > 0) {
+          const latest = records.sort(
+            (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+          )[0];
+          const daysSince = Math.floor(
+            (Date.now() - new Date(latest.timestamp).getTime()) / (1000 * 60 * 60 * 24)
+          );
+          if (daysSince >= 90) {
+            setReminder(`It's been ${daysSince} days since the last assessment. Time to reassess!`);
+          } else if (daysSince >= 30) {
+            setReminder(`${daysSince} days since the last assessment. Consider reassessing soon.`);
+          }
+        }
+      } catch { /* silent */ }
+    })();
+  }, []);
 
   return (
     <div className="home-container">
+      {reminder && (
+        <div className="reminder-banner">
+          <span className="reminder-icon">⏰</span>
+          <span>{reminder}</span>
+          <Button variant="emphasized" onClick={() => navigate("/assess/dynatrace")} style={{ marginLeft: "auto" }}>
+            Reassess Now
+          </Button>
+        </div>
+      )}
+
       <div className="hero-section">
         <div style={{ display: "flex", alignItems: "center", gap: "40px" }}>
           <div style={{ flex: 1, textAlign: "left" }}>
@@ -37,8 +84,8 @@ export const Home = () => {
             <h1 className="hero-title">Observability Transformation Journey Assessment</h1>
             <p className="hero-subtitle" style={{ margin: "0 0 32px 0" }}>
               Enable predictable digital reliability at enterprise scale. This
-              application measures, tracks, and visualizes observability maturity across five
-              levels — from foundational observability to autonomous reliability —
+              application measures, tracks, and assesses observability maturity across five
+              levels — from Reactive Foundational Observability to Visionary Autonomous Reliability —
               powered by Dynatrace intelligence.
             </p>
           </div>
@@ -86,6 +133,9 @@ export const Home = () => {
         <div className="levels-grid">
           {levels.map((level) => (
             <div className="level-card" key={level}>
+              <div className="level-header-label" style={{ color: MaturityLevelColors[level] }}>
+                {levelHeaders[level]}
+              </div>
               <div
                 className="level-number"
                 style={{ backgroundColor: MaturityLevelColors[level] }}
@@ -102,14 +152,18 @@ export const Home = () => {
       </div>
 
       <div className="cta-section">
-        <h2>Ready to assess your observability maturity?</h2>
+        <h2>Ready to assess?</h2>
         <p>
-          Complete a guided assessment across five key dimensions to discover
-          your current maturity level and get actionable recommendations.
+          Choose an assessment to evaluate your Dynatrace maturity or personal platform skills.
         </p>
-        <Button variant="emphasized" onClick={() => navigate("/assess")}>
-          Start Assessment
-        </Button>
+        <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
+          <Button variant="emphasized" onClick={() => navigate("/assess/dynatrace")}>
+            Dynatrace Maturity
+          </Button>
+          <Button variant="emphasized" onClick={() => navigate("/assess/personal")}>
+            Personal Growth
+          </Button>
+        </div>
       </div>
     </div>
   );

@@ -1,0 +1,68 @@
+/* No theme-specific overrides needed - neutral values are used directly in component CSS */
+
+/* Sticky tab bar — User Journey app style (underline indicator + scroll arrow) */
+.app-tab-bar-wrap {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(20, 24, 45, 0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(128, 128, 128, 0.2);
+}
+.app-tab-bar {
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0 16px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+  white-space: nowrap;
+  scroll-behavior: smooth;
+}
+.app-tab-bar::-webkit-scrollbar { display: none; }
+
+.app-tab-link {
+  flex-shrink: 0;
+  padding: 14px 18px 12px;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  color: rgba(200, 210, 230, 0.7);
+  white-space: nowrap;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.app-tab-link:hover {
+  color: #fff;
+}
+.app-tab-link.active {
+  color: #14bae4;
+  border-bottom-color: #14bae4;
+  font-weight: 600;
+}
+
+/* Scroll-arrow buttons */
+.app-tab-scroll-btn {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: linear-gradient(to right, rgba(20, 24, 45, 0) 0%, rgba(20, 24, 45, 0.92) 40%);
+  border: none;
+  color: rgba(200, 210, 230, 0.85);
+  font-size: 18px;
+  z-index: 2;
+  user-select: none;
+}
+.app-tab-scroll-btn:hover { color: #fff; }
+.app-tab-scroll-btn.left { left: 0; transform: scaleX(-1); }
+.app-tab-scroll-btn.right { right: 0; }
+.app-tab-scroll-btn.hidden { display: none; }

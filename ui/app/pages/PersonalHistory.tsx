@@ -7,19 +7,15 @@ import {
   MaturityLevelLabels,
   MaturityLevelColors,
 } from "../types";
-import { assessmentCategories } from "../maturityModel";
+import { personalGrowthCategories } from "../maturityModel";
 import {
-  getDtMaturityHistory,
   getPersonalGrowthHistory,
-  deleteDtMaturityResult,
   deletePersonalGrowthResult,
-  saveDtMaturityResult,
-  savePersonalGrowthResult,
   AssessmentRecord,
 } from "../grailService";
 import "../styles/history.css";
 
-export const History = () => {
+export const PersonalHistory = () => {
   const navigate = useNavigate();
   const [history, setHistory] = useState<AssessmentRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,24 +25,8 @@ export const History = () => {
   const loadHistory = useCallback(async () => {
     setLoading(true);
     try {
-      // Migrate any old localStorage history to Grail
-      const oldHistory = localStorage.getItem("sre-assessment-history");
-      if (oldHistory) {
-        const oldRecords = JSON.parse(oldHistory) as AssessmentRecord[];
-        for (const record of oldRecords) {
-          if (!record.user) record.user = "Unknown";
-          try {
-            await savePersonalGrowthResult(record);
-          } catch { /* skip duplicates */ }
-        }
-        localStorage.removeItem("sre-assessment-history");
-      }
-
-      const [dtRecords, pgRecords] = await Promise.all([
-        getDtMaturityHistory(),
-        getPersonalGrowthHistory(),
-      ]);
-      setHistory([...dtRecords, ...pgRecords].sort(
+      const pgRecords = await getPersonalGrowthHistory();
+      setHistory(pgRecords.sort(
         (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
       ));
     } catch (e) {
@@ -69,11 +49,7 @@ export const History = () => {
     if (!confirm("Are you sure you want to delete this assessment?")) return;
     setDeleting(id);
     try {
-      // Try deleting from both stores (only one will match)
-      await Promise.all([
-        deleteDtMaturityResult(id),
-        deletePersonalGrowthResult(id),
-      ]);
+      await deletePersonalGrowthResult(id);
       setHistory((prev) => prev.filter((item) => item.id !== id));
     } catch (err) {
       console.error("Failed to delete assessment:", err);
@@ -81,28 +57,21 @@ export const History = () => {
     setDeleting(null);
   };
 
-  // Get unique users for the filter
   const users = Array.from(new Set(history.map((h) => h.user))).sort();
 
-  // Filter history by selected user
   const filteredHistory =
     selectedUser === "all"
       ? history
       : history.filter((h) => h.user === selectedUser);
 
-  // Sort by timestamp descending
   const sortedHistory = [...filteredHistory].sort(
-    (a, b) =>
-      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
   );
 
-  // Calculate changes between consecutive assessments for the same user
   const getChange = (
     current: AssessmentRecord
   ): { scoreDiff: number; levelDiff: number } | null => {
-    const sameUserHistory = sortedHistory.filter(
-      (h) => h.user === current.user
-    );
+    const sameUserHistory = sortedHistory.filter((h) => h.user === current.user);
     const currentIdx = sameUserHistory.findIndex((h) => h.id === current.id);
     if (currentIdx < 0 || currentIdx >= sameUserHistory.length - 1) return null;
     const previous = sameUserHistory[currentIdx + 1];
@@ -112,18 +81,15 @@ export const History = () => {
     };
   };
 
-  // Category-level changes for the expanded view
   const getCategoryChanges = (
     current: AssessmentRecord
   ): Record<string, number> | null => {
-    const sameUserHistory = sortedHistory.filter(
-      (h) => h.user === current.user
-    );
+    const sameUserHistory = sortedHistory.filter((h) => h.user === current.user);
     const currentIdx = sameUserHistory.findIndex((h) => h.id === current.id);
     if (currentIdx < 0 || currentIdx >= sameUserHistory.length - 1) return null;
     const previous = sameUserHistory[currentIdx + 1];
     const changes: Record<string, number> = {};
-    for (const cat of assessmentCategories) {
+    for (const cat of personalGrowthCategories) {
       const curr = current.categoryScores[cat.id] || 0;
       const prev = previous.categoryScores[cat.id] || 0;
       changes[cat.id] = +(curr - prev).toFixed(2);
@@ -134,32 +100,30 @@ export const History = () => {
   if (loading) {
     return (
       <div className="history-container" style={{ textAlign: "center", paddingTop: 80 }}>
-        <h2>Loading Assessment History...</h2>
+        <h2>Loading Personal Growth History...</h2>
       </div>
     );
   }
 
   return (
     <div className="history-container">
+      <div className="print-bar">
+        <Button variant="emphasized" onClick={() => window.print()}>Print to PDF</Button>
+      </div>
       <div className="history-header">
-        <h1>Assessment History</h1>
-        <p>Track your observability maturity progress over time.</p>
+        <h1>Personal Growth History</h1>
+        <p>Track your Dynatrace proficiency growth over time.</p>
       </div>
 
       {history.length > 0 && (
         <div className="history-filter">
           <label className="filter-label">Filter by User:</label>
-          <Select
-            value={selectedUser}
-            onChange={(val) => setSelectedUser(val ?? "all")}
-          >
+          <Select value={selectedUser} onChange={(val) => setSelectedUser(val ?? "all")}>
             <SelectTrigger placeholder="All Users" />
             <SelectContent>
               <SelectOption value="all">All Users</SelectOption>
               {users.map((u) => (
-                <SelectOption key={u} value={u}>
-                  {u}
-                </SelectOption>
+                <SelectOption key={u} value={u}>{u}</SelectOption>
               ))}
             </SelectContent>
           </Select>
@@ -170,35 +134,27 @@ export const History = () => {
         <div className="history-empty">
           <p>
             {history.length === 0
-              ? "No assessments completed yet."
+              ? "No personal growth assessments completed yet."
               : "No assessments found for the selected user."}
           </p>
           <Button
             variant="emphasized"
-            onClick={() => navigate("/assess/dynatrace")}
+            onClick={() => navigate("/assess/personal")}
             style={{ marginTop: 16 }}
           >
-            Start Your First Assessment
+            Start Personal Growth Assessment
           </Button>
         </div>
       ) : (
         <div className="history-list">
           {sortedHistory.map((item) => {
-            const color =
-              MaturityLevelColors[item.overallLevel as MaturityLevel];
+            const color = MaturityLevelColors[item.overallLevel as MaturityLevel];
             const change = getChange(item);
             const catChanges = getCategoryChanges(item);
             return (
-              <div
-                className="history-card"
-                key={item.id}
-                onClick={() => handleCardClick(item)}
-              >
+              <div className="history-card" key={item.id} onClick={() => handleCardClick(item)}>
                 <div className="history-card-main">
-                  <div
-                    className="history-level-badge"
-                    style={{ backgroundColor: color }}
-                  >
+                  <div className="history-level-badge" style={{ backgroundColor: color }}>
                     {item.overallLevel}
                   </div>
                   <div className="history-info">
@@ -206,11 +162,7 @@ export const History = () => {
                     <span className="history-team">{item.teamName}</span>
                     <span className="history-date">
                       {new Date(item.timestamp).toLocaleDateString(undefined, {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
+                        year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
                       })}
                     </span>
                     <span className="history-level-label">
@@ -223,49 +175,24 @@ export const History = () => {
                     </div>
                     <div className="history-score-label">/ 5.0</div>
                     {change && (
-                      <div
-                        className={`history-change ${
-                          change.scoreDiff > 0
-                            ? "positive"
-                            : change.scoreDiff < 0
-                            ? "negative"
-                            : "neutral"
-                        }`}
-                      >
-                        {change.scoreDiff > 0 ? "+" : ""}
-                        {change.scoreDiff}
+                      <div className={`history-change ${change.scoreDiff > 0 ? "positive" : change.scoreDiff < 0 ? "negative" : "neutral"}`}>
+                        {change.scoreDiff > 0 ? "+" : ""}{change.scoreDiff}
                       </div>
                     )}
                   </div>
                   <div className="history-actions">
-                    <Button
-                      variant="emphasized"
-                      onClick={(e) => handleDelete(e, item.id)}
-                      disabled={deleting === item.id}
-                    >
+                    <Button variant="emphasized" onClick={(e) => handleDelete(e, item.id)} disabled={deleting === item.id}>
                       {deleting === item.id ? "..." : "Delete"}
                     </Button>
                   </div>
                 </div>
-
                 {catChanges && (
                   <div className="history-category-changes">
-                    {assessmentCategories.map((cat) => {
+                    {personalGrowthCategories.map((cat) => {
                       const diff = catChanges[cat.id];
                       return (
-                        <span
-                          key={cat.id}
-                          className={`cat-change-pill ${
-                            diff > 0
-                              ? "positive"
-                              : diff < 0
-                              ? "negative"
-                              : "neutral"
-                          }`}
-                        >
-                          {cat.name.split(" ")[0]}:{" "}
-                          {diff > 0 ? "+" : ""}
-                          {diff}
+                        <span key={cat.id} className={`cat-change-pill ${diff > 0 ? "positive" : diff < 0 ? "negative" : "neutral"}`}>
+                          {cat.name.split(" ")[0]}: {diff > 0 ? "+" : ""}{diff}
                         </span>
                       );
                     })}

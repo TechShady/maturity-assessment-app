@@ -1,16 +1,22 @@
 {
   "$schema": "./.dt-app/app.config.schema.json",
-  "environmentUrl": "https://jeq40225.apps.dynatrace.com/",
+  "environmentUrl": "https://guu84124.apps.dynatrace.com/",
   "app": {
-    "name": "OTJ Assessment",
-    "version": "0.5.0",
+    "name": "Maturity Assessment",
+    "version": "1.7.53",
     "description": "Measure and visualize observability maturity across five levels with Dynatrace",
-    "id": "my.sre.maturity.assessment.app",
+    "id": "my.maturity.assessment.app",
     "scopes": [
-      { "name": "state:app-states:read", "comment": "read assessment state" },
-      { "name": "state:app-states:write", "comment": "write assessment state" },
-      { "name": "state:user-app-states:read", "comment": "read user assessment results" },
-      { "name": "state:user-app-states:write", "comment": "write user assessment results" }
+      { "name": "state:app-states:read", "comment": "read assessment history" },
+      { "name": "state:app-states:write", "comment": "write assessment history" },
+      { "name": "state:app-states:delete", "comment": "delete assessment records" },
+      { "name": "storage:events:read", "comment": "read problems and security events" },
+      { "name": "storage:entities:read", "comment": "read entity counts" },
+      { "name": "storage:metrics:read", "comment": "read web vitals metrics" },
+      { "name": "storage:system:read", "comment": "read workflow executions and audit events" },
+      { "name": "storage:security.events:read", "comment": "read security events" },
+      { "name": "storage:buckets:read", "comment": "read all buckets including davis problems" },
+      { "name": "storage:bizevents:read", "comment": "read business events" }
     ]
   }
 }

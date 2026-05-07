@@ -1,0 +1,349 @@
+.pu-container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+
+.pu-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.pu-header h1 {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+}
+
+.pu-subtitle {
+  opacity: 0.6;
+  font-size: 14px;
+  margin: 0;
+}
+
+/* Sub-Tab Navigation */
+.pu-tabs {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  padding: 4px 0 12px 0;
+  border-bottom: 2px solid rgba(128, 128, 128, 0.2);
+  margin-bottom: 24px;
+}
+
+.pu-tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.pu-tab-btn:hover {
+  background: rgba(128, 128, 128, 0.1);
+  border-color: rgba(128, 128, 128, 0.2);
+}
+
+.pu-tab-btn-active {
+  background: rgba(20, 150, 255, 0.1);
+  border-color: rgba(20, 150, 255, 0.4);
+  color: #1496ff;
+  font-weight: 700;
+}
+
+.pu-tab-icon {
+  font-size: 16px;
+}
+
+.pu-tab-label {
+  font-size: 12px;
+}
+
+/* Tab Panel */
+.pu-tab-panel {
+  min-height: 400px;
+}
+
+.pu-tab-content {
+  animation: puFadeIn 0.2s ease;
+}
+
+@keyframes puFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Section Intro */
+.pu-section-intro {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: rgba(20, 150, 255, 0.05);
+  border-left: 3px solid rgba(20, 150, 255, 0.4);
+  border-radius: 0 8px 8px 0;
+}
+
+.pu-section-intro p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  opacity: 0.8;
+}
+
+/* Metrics Row */
+.pu-metrics-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.pu-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.pu-metric {
+  flex: 1;
+  min-width: 120px;
+  padding: 16px;
+  text-align: center;
+  background: rgba(128, 128, 128, 0.06);
+  border-radius: 10px;
+  border: 1px solid rgba(128, 128, 128, 0.15);
+}
+
+.pu-metric-wide {
+  flex: 2;
+  min-width: 240px;
+}
+
+.pu-metric-value {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.pu-metric-label {
+  font-size: 11px;
+  opacity: 0.6;
+  line-height: 1.4;
+}
+
+.pu-metric-threshold {
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Chart Section */
+.pu-chart-section {
+  margin-bottom: 24px;
+  padding: 20px;
+  background: rgba(128, 128, 128, 0.04);
+  border-radius: 10px;
+  border: 1px solid rgba(128, 128, 128, 0.15);
+}
+
+.pu-chart-section h3 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.pu-chart-hint {
+  margin: 8px 0 0 0;
+  font-size: 11px;
+  opacity: 0.5;
+  font-style: italic;
+}
+
+.pu-sparkline {
+  display: block;
+  margin: 4px auto;
+}
+
+/* Insight Box */
+.pu-insight-box {
+  padding: 16px 20px;
+  border-radius: 10px;
+  border: 1px solid rgba(128, 128, 128, 0.2);
+  background: rgba(128, 128, 128, 0.04);
+  margin-bottom: 20px;
+}
+
+.pu-insight-box h3 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.pu-insight-box p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Sub Section */
+.pu-sub-section {
+  margin: 20px 0;
+}
+
+.pu-sub-section h3 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+}
+
+/* Bar Chart */
+.pu-bar-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pu-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pu-bar-label {
+  min-width: 120px;
+  font-size: 12px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.pu-bar-track {
+  flex: 1;
+  height: 8px;
+  background: rgba(128, 128, 128, 0.15);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.pu-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #1496ff, #14bae4);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.pu-bar-value {
+  min-width: 40px;
+  text-align: right;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Health Grid (Summary) */
+.pu-health-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.pu-health-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: rgba(128, 128, 128, 0.06);
+  border: 1px solid rgba(128, 128, 128, 0.15);
+}
+
+.pu-health-icon {
+  font-size: 18px;
+}
+
+.pu-health-label {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Summary Recommendations */
+.pu-summary-recommendations {
+  margin-top: 24px;
+}
+
+.pu-summary-recommendations h3 {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 0 16px 0;
+}
+
+.pu-recommendation-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pu-recommendation {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(128, 128, 128, 0.2);
+}
+
+.pu-recommendation-critical {
+  border-color: rgba(196, 25, 11, 0.3);
+  background: rgba(196, 25, 11, 0.05);
+}
+
+.pu-recommendation-warning {
+  border-color: rgba(239, 139, 14, 0.3);
+  background: rgba(239, 139, 14, 0.05);
+}
+
+.pu-rec-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.pu-recommendation strong {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.pu-recommendation p {
+  margin: 0;
+  font-size: 12px;
+  opacity: 0.7;
+  line-height: 1.4;
+}
+
+/* Status colors */
+.pu-positive {
+  color: #59c46b;
+}
+
+.pu-negative {
+  color: #c4190b;
+}
+
+.pu-neutral {
+  color: rgba(128, 128, 128, 0.7);
+}
+
+.pu-no-data {
+  font-size: 13px;
+  opacity: 0.5;
+  text-align: center;
+  padding: 24px;
+  font-style: italic;
+}

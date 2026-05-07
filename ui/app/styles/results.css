@@ -32,7 +32,7 @@
   border-radius: 16px;
   margin-bottom: 36px;
   border: 2px solid;
-  background: var(--dt-colors-surface-default, rgba(255, 255, 255, 0.03));
+  background: rgba(128, 128, 128, 0.06);
 }
 
 .overall-level-num {
@@ -63,8 +63,9 @@
 .category-result-card {
   border-radius: 12px;
   padding: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  background: var(--dt-colors-surface-default, rgba(255, 255, 255, 0.03));
+  border: 1px solid rgba(128, 128, 128, 0.3);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  background: rgba(128, 128, 128, 0.06);
 }
 
 .cat-result-header {
@@ -86,7 +87,7 @@
 
 .cat-result-bar {
   height: 8px;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(128, 128, 128, 0.06);
   border-radius: 4px;
   overflow: hidden;
   margin-bottom: 8px;
@@ -117,8 +118,9 @@
   border-radius: 10px;
   padding: 16px 20px;
   margin-bottom: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  background: var(--dt-colors-surface-default, rgba(255, 255, 255, 0.03));
+  border: 1px solid rgba(128, 128, 128, 0.3);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  background: rgba(128, 128, 128, 0.06);
 }
 
 .rec-category {
@@ -135,6 +137,90 @@
   line-height: 1.5;
 }
 
+/* Action Plan */
+.action-plan-section {
+  margin-bottom: 40px;
+}
+
+.action-plan-section h2 {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.action-items {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.action-item {
+  border-radius: 10px;
+  padding: 16px 20px;
+  border: 1px solid rgba(128, 128, 128, 0.3);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  background: rgba(128, 128, 128, 0.06);
+}
+
+.action-item.completed {
+  opacity: 0.6;
+  border-color: rgba(89, 196, 107, 0.3);
+}
+
+.action-item.in-progress {
+  border-color: rgba(20, 150, 255, 0.3);
+}
+
+.action-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.action-category {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  opacity: 0.5;
+}
+
+.action-status {
+  background: rgba(128, 128, 128, 0.06);
+  border: 1px solid rgba(128, 128, 128, 0.3);
+  color: inherit;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 11px;
+}
+
+.action-status option {
+  background: #1e1e2e;
+  color: #ffffff;
+}
+
+.action-goal {
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.action-due {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.action-date-input {
+  background: rgba(128, 128, 128, 0.06);
+  border: 1px solid rgba(128, 128, 128, 0.3);
+  color: inherit;
+  border-radius: 4px;
+  padding: 3px 6px;
+  font-size: 12px;
+  margin-left: 4px;
+}
+
 .results-actions {
   text-align: center;
   display: flex;
@@ -142,31 +228,84 @@
   justify-content: center;
 }
 
+@page {
+  margin: 10mm;
+}
+
 @media print {
-  body {
+  * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+  }
+
+  body {
     background: white !important;
     color: #1a1a1a !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Nuclear reset: override EVERY div ancestor the Strato shell creates */
+  html, body, #root, #app,
+  body > div, body > div > div,
+  #root > div, #root > div > div, #root > div > div > div,
+  #root > div > div > div > div, #root > div > div > div > div > div,
+  #root > div > div > div > div > div > div {
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    position: static !important;
+    transform: none !important;
+    display: block !important;
+    width: auto !important;
+    max-width: none !important;
+    contain: none !important;
+  }
+
+  div[style*="overflow"], div[style*="height"], div[style*="max-height"] {
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  /* Hide Dynatrace shell / navigation */
+  nav, header,
+  [class*="AppHeader"], [class*="appHeader"],
+  [class*="sidebar"], [class*="Sidebar"],
+  [class*="NavItem"] {
+    display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
   }
 
   .results-container {
-    max-width: 100%;
-    padding: 0;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    position: static !important;
+    width: 100% !important;
   }
 
   .results-actions {
     display: none !important;
   }
 
-  /* Hide Dynatrace shell / navigation */
-  nav, header, [class*="AppShell"], [class*="shell"], [class*="sidebar"], [class*="nav"] {
-    display: none !important;
+  .results-header {
+    margin-bottom: 20px !important;
   }
 
   .overall-score-card {
     border-color: currentColor !important;
     background: white !important;
+    margin-bottom: 20px !important;
+    padding: 24px !important;
+  }
+
+  .category-results-grid {
+    grid-template-columns: repeat(2, 1fr);
+    margin-bottom: 0 !important;
   }
 
   .category-result-card,
@@ -179,12 +318,11 @@
     background: #e0e0e0 !important;
   }
 
-  .cat-result-fill {
-    print-color-adjust: exact !important;
-    -webkit-print-color-adjust: exact !important;
-  }
-
-  .category-results-grid {
-    grid-template-columns: repeat(2, 1fr);
+  /* Page 2: Recommendations start on a new page */
+  .recommendations-section {
+    page-break-before: always !important;
+    break-before: page !important;
+    padding-top: 0 !important;
+    margin-top: 0 !important;
   }
 }

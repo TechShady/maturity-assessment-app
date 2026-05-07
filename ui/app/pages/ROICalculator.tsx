@@ -4,6 +4,7 @@ import { Button } from "@dynatrace/strato-components/buttons";
 import {
   MaturityLevel,
   MaturityLevelLabels,
+  MaturityLevelFullLabels,
   MaturityLevelColors,
 } from "../types";
 import { dynatraceMaturityCategories, scoreToLevel } from "../maturityModel";
@@ -383,7 +384,7 @@ export const ROICalculator = () => {
           <p className="roi-desc">Use this narrative in customer conversations</p>
           <div className="story-block">
             <p>
-              Your organization is currently operating at <strong>Level {scoreToLevel(orgScores.overall)}: {MaturityLevelLabels[scoreToLevel(orgScores.overall) as MaturityLevel]}</strong> with
+              Your organization is currently operating at <strong>Level {scoreToLevel(orgScores.overall)}: {MaturityLevelFullLabels[scoreToLevel(orgScores.overall) as MaturityLevel]}</strong> with
               an overall maturity score of <strong>{orgScores.overall.toFixed(1)}/5.0</strong> based
               on {latestPerUser.length} assessor{latestPerUser.length !== 1 ? "s" : ""}.
             </p>

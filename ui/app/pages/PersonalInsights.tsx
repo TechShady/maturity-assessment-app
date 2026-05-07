@@ -5,6 +5,7 @@ import { TrendChart, RadarChart, Heatmap, InteractiveTrendChart } from "../compo
 import {
   MaturityLevel,
   MaturityLevelLabels,
+  MaturityLevelFullLabels,
   MaturityLevelColors,
 } from "../types";
 import { personalGrowthCategories, scoreToLevel } from "../maturityModel";
@@ -150,7 +151,7 @@ export const PersonalInsights = () => {
   const openCertificate = (badge: { label: string; icon: string; desc: string }) => {
     const dateStr = new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
     const latest = filteredHistory[filteredHistory.length - 1];
-    const levelLabel = MaturityLevelLabels[scoreToLevel(latest?.overallScore || 0) as MaturityLevel] || "";
+    const levelLabel = MaturityLevelFullLabels[scoreToLevel(latest?.overallScore || 0) as MaturityLevel] || "";
     const companyName = customerName || "";
     const recipientName = selectedUser !== "all" ? selectedUser : "";
 

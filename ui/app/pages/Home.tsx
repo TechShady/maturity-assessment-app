@@ -4,6 +4,7 @@ import { Button } from "@dynatrace/strato-components/buttons";
 import {
   MaturityLevel,
   MaturityLevelLabels,
+  MaturityLevelHeaders,
   MaturityLevelDescriptions,
   MaturityLevelColors,
 } from "../types";
@@ -25,14 +26,6 @@ const levels = [
   MaturityLevel.Level4,
   MaturityLevel.Level5,
 ];
-
-const levelHeaders: Record<MaturityLevel, string> = {
-  [MaturityLevel.Level1]: "Reactive",
-  [MaturityLevel.Level2]: "Foundational",
-  [MaturityLevel.Level3]: "Proficient",
-  [MaturityLevel.Level4]: "Strategic",
-  [MaturityLevel.Level5]: "Visionary",
-};
 
 export const Home = () => {
   const navigate = useNavigate();
@@ -134,7 +127,7 @@ export const Home = () => {
           {levels.map((level) => (
             <div className="level-card" key={level}>
               <div className="level-header-label" style={{ color: MaturityLevelColors[level] }}>
-                {levelHeaders[level]}
+                {MaturityLevelHeaders[level]}
               </div>
               <div
                 className="level-number"

@@ -5,6 +5,7 @@ import PptxGenJS from "pptxgenjs";
 import {
   MaturityLevel,
   MaturityLevelLabels,
+  MaturityLevelFullLabels,
   MaturityLevelColors,
 } from "../types";
 import { dynatraceMaturityCategories, personalGrowthCategories, scoreToLevel } from "../maturityModel";
@@ -300,7 +301,7 @@ export const QBRExport = () => {
 
     const displayName = customerName || "Customer";
     const overallColor = MaturityLevelColors[orgStats.level as MaturityLevel];
-    const levelLabel = MaturityLevelLabels[orgStats.level as MaturityLevel];
+    const levelLabel = MaturityLevelFullLabels[orgStats.level as MaturityLevel];
 
     const progressRows = progressData
       .map((p) => {
@@ -673,7 +674,7 @@ ${(() => {
     if (!orgStats) return;
 
     const displayName = customerName || "Customer";
-    const levelLabel = MaturityLevelLabels[orgStats.level as MaturityLevel];
+    const levelLabel = MaturityLevelFullLabels[orgStats.level as MaturityLevel];
     const overallColor = MaturityLevelColors[orgStats.level as MaturityLevel];
 
     const pptx = new PptxGenJS();

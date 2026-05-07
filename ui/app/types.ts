@@ -15,6 +15,24 @@ export const MaturityLevelLabels: Record<MaturityLevel, string> = {
   [MaturityLevel.Level5]: "Autonomous Reliability",
 };
 
+/** Short stage name shown as a prefix to the full level label (e.g. "Foundational - Standardized Response"). */
+export const MaturityLevelHeaders: Record<MaturityLevel, string> = {
+  [MaturityLevel.Level1]: "Reactive",
+  [MaturityLevel.Level2]: "Foundational",
+  [MaturityLevel.Level3]: "Proficient",
+  [MaturityLevel.Level4]: "Strategic",
+  [MaturityLevel.Level5]: "Visionary",
+};
+
+/** Combined "Header - Label" string used everywhere outside the Home page. */
+export const MaturityLevelFullLabels: Record<MaturityLevel, string> = {
+  [MaturityLevel.Level1]: `${MaturityLevelHeaders[MaturityLevel.Level1]} - ${MaturityLevelLabels[MaturityLevel.Level1]}`,
+  [MaturityLevel.Level2]: `${MaturityLevelHeaders[MaturityLevel.Level2]} - ${MaturityLevelLabels[MaturityLevel.Level2]}`,
+  [MaturityLevel.Level3]: `${MaturityLevelHeaders[MaturityLevel.Level3]} - ${MaturityLevelLabels[MaturityLevel.Level3]}`,
+  [MaturityLevel.Level4]: `${MaturityLevelHeaders[MaturityLevel.Level4]} - ${MaturityLevelLabels[MaturityLevel.Level4]}`,
+  [MaturityLevel.Level5]: `${MaturityLevelHeaders[MaturityLevel.Level5]} - ${MaturityLevelLabels[MaturityLevel.Level5]}`,
+};
+
 export const MaturityLevelDescriptions: Record<MaturityLevel, string> = {
   [MaturityLevel.Level1]:
     "Basic monitoring is in place. Incident response is mostly manual and reactive. Teams rely on alerts and dashboards without defined SLOs.",

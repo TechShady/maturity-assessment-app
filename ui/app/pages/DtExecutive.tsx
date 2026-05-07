@@ -5,6 +5,7 @@ import { RadarChart } from "../components/Charts";
 import {
   MaturityLevel,
   MaturityLevelLabels,
+  MaturityLevelFullLabels,
   MaturityLevelColors,
 } from "../types";
 import { dynatraceMaturityCategories, scoreToLevel } from "../maturityModel";
@@ -137,7 +138,7 @@ export const DtExecutive = () => {
             {orgStats.overall.toFixed(1)}
           </div>
           <div className="exec-level">
-            Level {orgStats.overallLevel}: {MaturityLevelLabels[orgStats.overallLevel as MaturityLevel]}
+            Level {orgStats.overallLevel}: {MaturityLevelFullLabels[orgStats.overallLevel as MaturityLevel]}
           </div>
           <div className="exec-subtitle">Organization Average</div>
         </div>
@@ -215,7 +216,7 @@ export const DtExecutive = () => {
                     <span className="team-score" style={{ color }}>{t.avgScore.toFixed(1)}</span>
                   </div>
                   <div className="team-members">{t.members} member{t.members !== 1 ? "s" : ""}</div>
-                  <div className="team-level">Level {t.level}: {MaturityLevelLabels[t.level as MaturityLevel]}</div>
+                  <div className="team-level">Level {t.level}: {MaturityLevelFullLabels[t.level as MaturityLevel]}</div>
                   <div className="team-cats">
                     {dynatraceMaturityCategories.map((cat) => {
                       const s = t.catAvgs[cat.id] || 0;

@@ -3,7 +3,7 @@
   "environmentUrl": "https://guu84124.apps.dynatrace.com/",
   "app": {
     "name": "Maturity Assessment",
-    "version": "1.7.54",
+    "version": "1.7.55",
     "description": "Measure and visualize observability maturity across five levels with Dynatrace",
     "id": "my.maturity.assessment.app",
     "scopes": [

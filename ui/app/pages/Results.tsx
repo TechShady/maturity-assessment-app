@@ -4,6 +4,7 @@ import { Button } from "@dynatrace/strato-components/buttons";
 import {
   MaturityLevel,
   MaturityLevelLabels,
+  MaturityLevelFullLabels,
   MaturityLevelDescriptions,
   MaturityLevelColors,
   AssessmentResult,
@@ -173,7 +174,7 @@ export const Results = () => {
           <div style="height:8px;background:#e0e0e0;border-radius:4px;overflow:hidden;margin-bottom:6px;">
             <div style="height:100%;width:${(score / 5) * 100}%;background:${color};border-radius:4px;"></div>
           </div>
-          <div style="font-size:12px;color:#666;">Level ${level}: ${MaturityLevelLabels[level as MaturityLevel]}</div>
+          <div style="font-size:12px;color:#666;">Level ${level}: ${MaturityLevelFullLabels[level as MaturityLevel]}</div>
         </div>`;
       })
       .join("");
@@ -202,7 +203,7 @@ export const Results = () => {
       </div>
       <div style="text-align:center;border:2px solid ${overallColor};border-radius:14px;padding:30px;margin-bottom:30px;">
         <div style="font-size:60px;font-weight:800;color:${overallColor};">${result.overallLevel}</div>
-        <div style="font-size:20px;font-weight:600;">${MaturityLevelLabels[result.overallLevel]}</div>
+        <div style="font-size:20px;font-weight:600;">${MaturityLevelFullLabels[result.overallLevel]}</div>
         <div style="font-size:14px;color:#666;">Overall Score: ${result.overallScore.toFixed(2)} / 5.00</div>
       </div>
       <div class="grid">${catCardsHtml}</div>
@@ -248,7 +249,7 @@ export const Results = () => {
           {result.overallLevel}
         </div>
         <div className="overall-level-name">
-          {MaturityLevelLabels[result.overallLevel]}
+          {MaturityLevelFullLabels[result.overallLevel]}
         </div>
         <div className="overall-score-detail">
           Overall Score: {result.overallScore.toFixed(2)} / 5.00
@@ -278,7 +279,7 @@ export const Results = () => {
                 />
               </div>
               <div className="cat-result-level">
-                Level {level}: {MaturityLevelLabels[level]}
+                Level {level}: {MaturityLevelFullLabels[level]}
               </div>
             </div>
           );

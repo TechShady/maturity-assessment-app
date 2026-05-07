@@ -5,6 +5,7 @@ import { Select, SelectTrigger, SelectContent, SelectOption } from "@dynatrace/s
 import {
   MaturityLevel,
   MaturityLevelLabels,
+  MaturityLevelFullLabels,
   MaturityLevelColors,
 } from "../types";
 import { assessmentCategories } from "../maturityModel";
@@ -214,7 +215,7 @@ export const History = () => {
                       })}
                     </span>
                     <span className="history-level-label">
-                      {MaturityLevelLabels[item.overallLevel as MaturityLevel]}
+                      {MaturityLevelFullLabels[item.overallLevel as MaturityLevel]}
                     </span>
                   </div>
                   <div className="history-score-section">

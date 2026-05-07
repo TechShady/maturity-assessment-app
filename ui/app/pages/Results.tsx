@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@dynatrace/strato-components/buttons";
 import {
@@ -10,6 +10,10 @@ import {
   AssessmentResult,
 } from "../types";
 import { dynatraceMaturityCategories, personalGrowthCategories, scoreToLevel } from "../maturityModel";
+import {
+  getActionPlan, saveActionPlan, ActionItem,
+  getUniversityPlan, saveUniversityPlan, UniversityPlan,
+} from "../grailService";
 import "../styles/results.css";
 
 const recommendations: Record<string, Record<number, string>> = {
@@ -328,31 +332,29 @@ interface ActionPlanProps {
   recommendations: Record<string, Record<number, string>>;
 }
 
-interface ActionItem {
-  id: string;
-  category: string;
-  goal: string;
-  dueDate: string;
-  status: "not-started" | "in-progress" | "completed";
-}
-
 const ActionPlan: React.FC<ActionPlanProps> = ({ categories, recommendations }) => {
-  const [items, setItems] = useState<ActionItem[]>(() => {
-    const stored = sessionStorage.getItem("action-plan");
-    if (stored) return JSON.parse(stored);
-    return categories.map((cat) => ({
-      id: cat.id,
-      category: cat.name,
-      goal: recommendations[cat.id]?.[cat.level] || "Improve this area",
-      dueDate: "",
-      status: "not-started" as const,
-    }));
-  });
+  const defaultItems: ActionItem[] = categories.map((cat) => ({
+    id: cat.id,
+    category: cat.name,
+    goal: recommendations[cat.id]?.[cat.level] || "Improve this area",
+    dueDate: "",
+    status: "not-started" as const,
+  }));
+
+  const [items, setItems] = useState<ActionItem[]>(defaultItems);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    getActionPlan().then((stored) => {
+      if (stored && stored.length > 0) setItems(stored);
+      setLoaded(true);
+    });
+  }, []);
 
   const updateItem = (id: string, updates: Partial<ActionItem>) => {
     setItems((prev) => {
       const updated = prev.map((item) => (item.id === id ? { ...item, ...updates } : item));
-      sessionStorage.setItem("action-plan", JSON.stringify(updated));
+      saveActionPlan(updated);
       return updated;
     });
   };
@@ -396,21 +398,22 @@ const ActionPlan: React.FC<ActionPlanProps> = ({ categories, recommendations }) 
 };
 
 const DynatraceUniversityPlan: React.FC = () => {
-  const [status, setStatus] = useState<"not-started" | "in-progress" | "completed">(() => {
-    const stored = sessionStorage.getItem("dt-university-plan");
-    if (stored) return JSON.parse(stored).status || "not-started";
-    return "not-started";
-  });
-  const [dueDate, setDueDate] = useState(() => {
-    const stored = sessionStorage.getItem("dt-university-plan");
-    if (stored) return JSON.parse(stored).dueDate || "";
-    return "";
-  });
+  const [status, setStatus] = useState<"not-started" | "in-progress" | "completed">("not-started");
+  const [dueDate, setDueDate] = useState("");
+
+  useEffect(() => {
+    getUniversityPlan().then((stored) => {
+      if (stored) {
+        setStatus(stored.status || "not-started");
+        setDueDate(stored.dueDate || "");
+      }
+    });
+  }, []);
 
   const update = (newStatus: typeof status, newDue: string) => {
     setStatus(newStatus);
     setDueDate(newDue);
-    sessionStorage.setItem("dt-university-plan", JSON.stringify({ status: newStatus, dueDate: newDue }));
+    saveUniversityPlan({ status: newStatus, dueDate: newDue });
   };
 
   return (

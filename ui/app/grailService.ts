@@ -85,3 +85,67 @@ async function deleteRecord(prefix: string, id: string): Promise<void> {
     console.error(`deleteRecord(${prefix}) failed:`, e);
   }
 }
+
+// --- Action Plan Store ---
+
+const ACTION_PLAN_KEY = "action-plan";
+const DT_UNIVERSITY_PLAN_KEY = "dt-university-plan";
+
+export interface ActionItem {
+  id: string;
+  category: string;
+  goal: string;
+  dueDate: string;
+  status: "not-started" | "in-progress" | "completed";
+}
+
+export interface UniversityPlan {
+  status: "not-started" | "in-progress" | "completed";
+  dueDate: string;
+}
+
+export async function getActionPlan(): Promise<ActionItem[] | null> {
+  try {
+    const response = await stateClient.getAppState({ key: ACTION_PLAN_KEY });
+    if (response.value) {
+      return JSON.parse(response.value) as ActionItem[];
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export async function saveActionPlan(items: ActionItem[]): Promise<void> {
+  try {
+    await stateClient.setAppState({
+      key: ACTION_PLAN_KEY,
+      body: { value: JSON.stringify(items) },
+    });
+  } catch (e) {
+    console.error("saveActionPlan failed:", e);
+  }
+}
+
+export async function getUniversityPlan(): Promise<UniversityPlan | null> {
+  try {
+    const response = await stateClient.getAppState({ key: DT_UNIVERSITY_PLAN_KEY });
+    if (response.value) {
+      return JSON.parse(response.value) as UniversityPlan;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export async function saveUniversityPlan(plan: UniversityPlan): Promise<void> {
+  try {
+    await stateClient.setAppState({
+      key: DT_UNIVERSITY_PLAN_KEY,
+      body: { value: JSON.stringify(plan) },
+    });
+  } catch (e) {
+    console.error("saveUniversityPlan failed:", e);
+  }
+}
